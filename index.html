@@ -643,7 +643,11 @@
       .then(function(text){body.textContent="“"+text.replace(/^["“\s]+|["”\s]+$/g,"")+"”";src.textContent="✨ Written by your AI agent";src.className="ai-src live";actions.style.display="flex";})
       .catch(function(){body.textContent="“"+templateDraft(a)+"”";src.textContent="Preview agent · connect a key for live AI drafting";src.className="ai-src";actions.style.display="flex";});
   }
-  function copyText(t){try{navigator.clipboard.writeText(t);}catch(e){var ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");}catch(e2){}document.body.removeChild(ta);}}
+  function copyText(t){
+    function fb(){var ta=document.createElement("textarea");ta.value=t;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();try{document.execCommand("copy");}catch(e2){}document.body.removeChild(ta);}
+    try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).catch(fb);return;}}catch(e){}
+    fb();
+  }
 
   /* ---------- Signal Analyzer ---------- */
   function fallbackAnalyze(text){
