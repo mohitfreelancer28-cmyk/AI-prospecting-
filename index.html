@@ -30,9 +30,8 @@
   /* ---------- top bar ---------- */
   .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
   .brand{display:flex;align-items:center;gap:12px}
-  .logo{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;
-    background:linear-gradient(150deg,var(--teal),var(--teal-700));color:#04201c;font-weight:800;font-size:19px;letter-spacing:-.5px;
-    box-shadow:0 6px 18px -6px var(--teal-glow), inset 0 1px 0 rgba(255,255,255,.35);}
+  .logo{width:40px;height:40px;display:grid;place-items:center;flex:none}
+  .logo svg{width:38px;height:38px;display:block}
   .brand h1{font-size:16px;margin:0;font-weight:700;letter-spacing:.2px}
   .brand .sub{font-size:11.5px;color:var(--muted-2);letter-spacing:.3px}
   .top-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -208,11 +207,18 @@
   <!-- TOP BAR -->
   <div class="topbar">
     <div class="brand">
-      <div class="logo">L</div>
+      <div class="logo" aria-label="LaCleo">
+        <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M23 9l11.5 5.6v15.8L23 36V9z" fill="#2dd4bf" fill-opacity=".22"/>
+          <path d="M23 9l11.5 5.6v15.8L23 36" stroke="#2dd4bf" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+          <rect x="8.4" y="12" width="18.6" height="20.6" rx="5" fill="none" stroke="#2dd4bf" stroke-width="2.8"/>
+          <path d="M27 16.4l-4.4 2.1v10.4l4.4 2" stroke="#2dd4bf" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" stroke-opacity=".8"/>
+        </svg>
+      </div>
       <div><h1>LaCleo</h1><div class="sub">AI Prospecting · Verified Pipeline</div></div>
     </div>
     <div class="top-right">
-      <span class="chip" id="client-chip"><span class="h-logo" id="client-logo">H</span> Client: <span id="client-chip-name">HungerBox</span></span>
+      <span class="chip" id="client-chip"><span class="h-logo">◆</span> Prospecting platform · Demo</span>
       <span class="badge-demo"><span class="dot"></span> Demo · Seeded sample data</span>
       <button class="cfg-btn" id="toggle-cfg">⚙ Configure demo</button>
     </div>
@@ -224,7 +230,7 @@
       <h3>Configure this demo</h3>
       <p class="hint">Set it up for the prospect you're about to call, then hit <b>Generate pipeline</b> — the agent rebuilds a tailored, seeded pipeline live. Your setup is saved on this device.</p>
       <div class="form-grid">
-        <div class="field"><label>Client / prospect name</label><input type="text" id="f-client" placeholder="HungerBox"></div>
+        <div class="field"><label>Client / prospect name <span class="tip">leave blank for the platform view</span></label><input type="text" id="f-client" placeholder="e.g. Acme Corp"></div>
         <div class="field"><label>Plan &amp; price line</label><input type="text" id="f-plan" placeholder="Growth — Verified Pipeline · USD 599/mo · 50–60 accounts"></div>
         <div class="field full"><label>What they sell / one-line pitch <span class="tip">shown in the hero &amp; used in drafts</span></label>
           <input type="text" id="f-pitch" placeholder="B2B food-tech — managed cafeterias for enterprises & campuses across India."></div>
@@ -243,12 +249,11 @@
       </div>
       <div class="drawer-actions">
         <button class="btn btn-primary" id="btn-generate">⚡ Generate pipeline</button>
-        <button class="btn btn-ghost" id="btn-blank">Clear (new client)</button>
+        <button class="btn btn-ghost" id="btn-blank">Reset to platform view</button>
         <div class="preset-wrap">
           <label for="f-preset">Load preset</label>
           <select id="f-preset">
             <option value="">—</option>
-            <option value="hungerbox">HungerBox (food-tech)</option>
             <option value="cloudsecure">CloudSecure (cybersecurity SaaS)</option>
             <option value="ledgerly">Ledgerly (fintech / payments)</option>
           </select>
@@ -259,7 +264,7 @@
 
   <!-- HERO -->
   <div class="hero">
-    <h2>Verified pipeline for <span class="accent" id="hero-client">HungerBox</span>, built by an AI prospecting agent</h2>
+    <h2 id="hero-h2">A verified pipeline, <span class="accent">built by an AI prospecting agent</span></h2>
     <p id="hero-pitch">LaCleo scans for live buying signals, matches the right buyer personas, and drafts a calibrated first line — so your team walks into every conversation with a reason to talk.</p>
     <div class="plan-pill" id="hero-plan">◆ Growth — Verified Pipeline · USD 599/mo · 50–60 accounts</div>
     <div class="agent">
@@ -316,7 +321,7 @@
 
   <!-- FOOTER -->
   <div class="footer">
-    <div class="prepared" id="footer-prepared">Prepared for HungerBox · Growth plan</div>
+    <div class="prepared" id="footer-prepared">LaCleo · AI Prospecting Platform</div>
     <div>LaCleo — AI prospecting for B2B revenue teams</div>
   </div>
   <div class="disclaimer">
@@ -330,31 +335,6 @@
 
   /* ================= presets ================= */
   var PRESETS = {
-    hungerbox:{
-      client:"HungerBox", accent:"#2dd4bf", count:56,
-      plan:"Growth — Verified Pipeline · USD 599/mo · 50–60 accounts",
-      pitch:"B2B food-tech — managed cafeterias for enterprises, tech parks, hospitals and universities across India. ICP: campuses with 1,000+ on-site employees.",
-      industries:["Enterprise IT","GCC / Shared Services","Tech Park / CRE","Healthcare","Higher Education","Manufacturing","BFSI","BPO / ITeS"],
-      regions:["Bengaluru","Hyderabad","Pune","NCR – Gurugram","NCR – Noida","Chennai","Mumbai","APAC GCC – Singapore","APAC GCC – Manila"],
-      signals:[
-        ["New campus opening","Greenfield F&B fit-out — get in before the cafeteria vendor is locked."],
-        ["RTO mandate","RTO spikes daily footfall; incumbent canteen throughput won't cope."],
-        ["Cafeteria / F&B RFP","Active buying window — respond with verified references and digitized ops."],
-        ["FM contract renewal","Displacement window — benchmark the incumbent on cost, experience and tech."],
-        ["Rapid hiring","Headcount outpaces canteen capacity — plan F&B scaling ahead of the ramp."],
-        ["Employee-experience initiative","Food is the #1 daily EX touchpoint — tie a cafeteria upgrade to eNPS."],
-        ["Canteen digitization","Position the app + POS + analytics as the platform layer."],
-        ["New admin leadership","New leader wants early wins — propose a 90-day F&B experience audit."],
-        ["Expansion funding","Funded expansion = new sites needing a turnkey managed cafeteria."],
-        ["Food-safety upgrade","De-risk with FSSAI-compliant, audited, tech-tracked kitchen operations."]
-      ],
-      personas:[
-        ["Admin & Facilities","Head of Admin, Facilities Manager, Head of Workplace, GM – Facilities"],
-        ["Workplace Experience & HR","Head of Workplace Experience, Employee Experience Lead, HRBP, CHRO"],
-        ["Procurement & Vendor","Head of Procurement, Category Manager – Facilities, Sourcing Manager"],
-        ["Operations & Site Leadership","Site Ops Head, Campus Director, GM – Operations, India Site Lead"]
-      ]
-    },
     cloudsecure:{
       client:"CloudSecure", accent:"#5b8cff", count:52,
       plan:"Scale — Verified Pipeline · USD 899/mo · 60–80 accounts",
@@ -453,13 +433,14 @@
 
   /* ================= config <-> form ================= */
   var $=function(id){return document.getElementById(id);};
+  function esc(s){return String(s).replace(/[&<>"]/g,function(m){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m];});}
   function toConfig(){
     var sigLines=$("f-signals").value.split("\n").map(function(l){return l.trim();}).filter(Boolean).map(function(l){
       var p=l.split("»");return [p[0].trim(),(p[1]||"").trim()];});
     var perLines=$("f-personas").value.split("\n").map(function(l){return l.trim();}).filter(Boolean).map(function(l){
       var p=l.split("»");return [p[0].trim(),(p[1]||"").trim()];});
     return {
-      client:$("f-client").value.trim()||"Your Prospect",
+      client:$("f-client").value.trim(),
       plan:$("f-plan").value.trim()||"Growth — Verified Pipeline",
       pitch:$("f-pitch").value.trim()||"LaCleo surfaces a verified, signal-driven pipeline for your team.",
       industries:$("f-inds").value.split(",").map(function(s){return s.trim();}).filter(Boolean),
@@ -558,7 +539,7 @@
   function shortPitch(){
     var p=current.pitch.split(/[.;]/)[0].trim();
     if(p.length>110)p=p.slice(0,108)+"…";
-    return current.client+": "+p+".";
+    return (current.client?current.client+": ":"")+p+".";
   }
 
   function renderSide(data){
@@ -581,13 +562,22 @@
 
   /* ================= header/hero ================= */
   function renderChrome(c){
-    var letter=(c.client[0]||"C").toUpperCase();
-    $("client-logo").textContent=letter; $("client-chip-name").textContent=c.client;
-    $("hero-client").textContent=c.client; $("hero-pitch").textContent=c.pitch;
+    var isPlatform=!c.client;
+    if(isPlatform){
+      $("client-chip").innerHTML='<span class="h-logo">◆</span> Prospecting platform · Demo';
+      $("hero-h2").innerHTML='A verified pipeline, <span class="accent">built by an AI prospecting agent</span>';
+      $("footer-prepared").textContent="LaCleo · AI Prospecting Platform";
+      document.title="LaCleo · AI Prospecting Platform";
+    }else{
+      var letter=(c.client[0]||"C").toUpperCase();
+      $("client-chip").innerHTML='<span class="h-logo">'+esc(letter)+'</span> Client: '+esc(c.client);
+      $("hero-h2").innerHTML='Verified pipeline for <span class="accent">'+esc(c.client)+'</span>, built by an AI prospecting agent';
+      var planShort=c.plan.split("—")[0].trim().split("·")[0].trim()||"Growth";
+      $("footer-prepared").textContent="Prepared for "+c.client+" · "+planShort+" plan";
+      document.title="LaCleo · Verified Pipeline for "+c.client;
+    }
+    $("hero-pitch").textContent=c.pitch;
     $("hero-plan").textContent="◆ "+c.plan;
-    var planShort=c.plan.split("—")[0].trim().split("·")[0].trim()||"Growth";
-    $("footer-prepared").textContent="Prepared for "+c.client+" · "+planShort+" plan";
-    document.title="LaCleo · Verified Pipeline for "+c.client;
     $("lib-title").textContent="Signal library";
   }
 
@@ -657,7 +647,7 @@
     renderSide(data);
     renderFilters(data);
     run(data);
-    try{localStorage.setItem("lacleo_demo_config",JSON.stringify(config));}catch(e){}
+    try{localStorage.setItem("lacleo_demo_config_v2",JSON.stringify(config));}catch(e){}
   }
 
   /* ---------- filters & sort ---------- */
@@ -715,21 +705,41 @@
   $("fx-clear").addEventListener("click",function(){
     $("fx-search").value="";$("fx-signal").value="";$("fx-persona").value="";$("fx-region").value="";
     $("fx-conf").value=0;$("fx-confval").textContent="0%";$("fx-sort").value="def";sortCards("def");applyFilters();});
-  $("btn-blank").addEventListener("click",function(){
-    fillForm({client:"",plan:"Growth — Verified Pipeline · USD 599/mo · 50–60 accounts",pitch:"",
-      industries:["Enterprise IT","SaaS","Manufacturing","Healthcare"],regions:["Bengaluru","Mumbai","London","New York"],
-      signals:[["New leadership hire",""],["Funding round",""],["Rapid hiring",""],["Product launch",""],["Geo expansion",""]],
-      personas:[["Economic Buyer","VP, Director, Head of"],["Champion","Manager, Lead, Senior"],["Procurement","Procurement, Sourcing, Vendor"]],
-      count:52,accent:"#2dd4bf"});});
+  $("btn-blank").addEventListener("click",function(){ fillForm(platformConfig()); });
   $("f-preset").addEventListener("change",function(){
     var p=PRESETS[this.value];if(p){fillForm({client:p.client,plan:p.plan,pitch:p.pitch,industries:p.industries,regions:p.regions,
       signals:p.signals,personas:p.personas,count:p.count,accent:p.accent});}this.value="";});
 
+  /* ================= platform default ================= */
+  function platformConfig(){return {
+    client:"", accent:"#2dd4bf", count:56,
+    plan:"Verified Pipeline · demo workspace — ⚙ Configure for your prospect",
+    pitch:"LaCleo scans your market for live buying signals, matches the right buyer personas, and drafts a calibrated first line. Configure it for any prospect to see a tailored pipeline.",
+    industries:["Enterprise IT","SaaS","Fintech","Healthcare","Manufacturing","Retail","Logistics","BFSI"],
+    regions:["Bengaluru","Mumbai","London","New York","Singapore","Berlin","Dubai","Sydney"],
+    signals:[
+      ["New leadership hire","A new decision-maker is re-evaluating vendors — time a fresh-eyes intro."],
+      ["Funding round","Fresh budget for tools and headcount — get on the shortlist early."],
+      ["Rapid hiring","Scaling teams signal the growth pains your product solves."],
+      ["Product launch","A new initiative needs supporting tooling and partners."],
+      ["Geo expansion","New markets create new operational needs to serve."],
+      ["M&A activity","Integration drives consolidation and tooling decisions."],
+      ["Tech migration","Re-platforming opens a clear buying window."],
+      ["Partnership announced","An ecosystem move signals strategic priorities."],
+      ["Compliance push","Regulatory deadlines create urgency for a solution."],
+      ["Traffic / demand surge","A growth signal worth a timely, relevant outreach."]
+    ],
+    personas:[
+      ["Economic Buyer","VP, Director, Head of, Chief"],
+      ["Champion","Manager, Team Lead, Senior Specialist"],
+      ["Technical Evaluator","Architect, Engineer, Analyst"],
+      ["Procurement","Procurement Manager, Sourcing Lead, Vendor Manager"]
+    ]
+  };}
+
   /* ================= boot ================= */
-  var saved=null;try{saved=JSON.parse(localStorage.getItem("lacleo_demo_config"));}catch(e){}
-  var boot=saved&&saved.client?saved:PRESETS.hungerbox;
-  // normalize preset shape -> config shape
-  if(boot===PRESETS.hungerbox){boot={client:boot.client,plan:boot.plan,pitch:boot.pitch,industries:boot.industries,regions:boot.regions,signals:boot.signals,personas:boot.personas,count:boot.count,accent:boot.accent};}
+  var saved=null;try{saved=JSON.parse(localStorage.getItem("lacleo_demo_config_v2"));}catch(e){}
+  var boot=saved&&saved.industries?saved:platformConfig();
   fillForm(boot);
   generate(boot);
 })();
