@@ -323,7 +323,7 @@
   <div class="ai-panel">
     <div class="ai-panel-head">
       <h3>✨ AI Signal Analyzer</h3>
-      <span class="ai-status" id="ai-status">Checking AI backend…</span>
+      <span class="ai-status" id="ai-status">Checking agents…</span>
     </div>
     <p class="ai-sub">Paste a news headline, funding announcement, LinkedIn post, or job description — the AI reads it and extracts the buying signal, the persona to contact, and a suggested outreach angle. Live during your call.</p>
     <textarea id="an-input" placeholder="e.g. Acme Corp announced a new 400-seat office in Austin and appointed a new VP of Workplace Experience."></textarea>
@@ -371,7 +371,7 @@
     <div>LaCleo — AI prospecting for B2B revenue teams</div>
   </div>
   <div class="disclaimer">
-    Pre-loaded pipeline accounts are illustrative sample data — connect your sources (Apollo, Clay, LinkedIn, your CRM) for live, source-verified accounts. The AI Signal Analyzer and outreach drafting run on Claude when the backend is configured (see <code>api/claude.js</code>); otherwise they use built-in smart templates so it works everywhere.
+    Pre-loaded pipeline accounts are illustrative sample data — connect your sources (Apollo, Clay, LinkedIn, your CRM) for live, source-verified accounts. The AI Signal Analyzer and outreach drafting run on your live AI agents when connected; otherwise they use built-in preview agents so it works everywhere.
   </div>
 </div>
 
@@ -603,19 +603,19 @@
   }
   function probeBackend(){
     var el=$("ai-status");
-    if(!backendUsable()){el.textContent="Template engine · add a key for live Claude";el.className="ai-status tpl";return;}
+    if(!backendUsable()){el.textContent="Preview agents · connect a key to activate live AI agents";el.className="ai-status tpl";return;}
     fetch("/api/claude",{method:"GET"}).then(function(r){return r.ok?r.json():null;}).then(function(d){
-      if(d&&d.backend&&d.hasKey){AI_LIVE=true;el.textContent="AI backend: Live (Claude)";el.className="ai-status live";}
-      else if(d&&d.backend){AI_LIVE=false;el.textContent="AI backend found · add ANTHROPIC_API_KEY to go live";el.className="ai-status tpl";}
+      if(d&&d.backend&&d.hasKey){AI_LIVE=true;el.textContent="Live AI agents · active";el.className="ai-status live";}
+      else if(d&&d.backend){AI_LIVE=false;el.textContent="Agents connected · add a key to activate live AI agents";el.className="ai-status tpl";}
       else{throw new Error("no backend");}
-    }).catch(function(){AI_LIVE=false;el.textContent="Template engine · add a key for live Claude";el.className="ai-status tpl";});
+    }).catch(function(){AI_LIVE=false;el.textContent="Preview agents · connect a key to activate live AI agents";el.className="ai-status tpl";});
   }
   function aiDraft(el,a){
     var body=el.querySelector(".draft-body"),actions=el.querySelector(".draft-actions"),src=el.querySelector(".ai-src");
-    actions.style.display="none";body.innerHTML='<span class="ai-load">✨ Claude is writing a tailored first line</span>';
+    actions.style.display="none";body.innerHTML='<span class="ai-load">✨ Your AI agent is writing a tailored first line</span>';
     callBackend("outreach",{client:current.client,valueProp:current.pitch,company:a.name,contact:a.contact,title:a.title,region:a.region,signal:a.sigName,evidence:a.evidence,angle:a.angle||""})
-      .then(function(text){body.textContent="“"+text.replace(/^["“\s]+|["”\s]+$/g,"")+"”";src.textContent="✨ Written by Claude";src.className="ai-src live";actions.style.display="flex";})
-      .catch(function(){body.textContent="“"+templateDraft(a)+"”";src.textContent="Smart template · connect the AI backend for live Claude drafting";src.className="ai-src";actions.style.display="flex";});
+      .then(function(text){body.textContent="“"+text.replace(/^["“\s]+|["”\s]+$/g,"")+"”";src.textContent="✨ Written by your AI agent";src.className="ai-src live";actions.style.display="flex";})
+      .catch(function(){body.textContent="“"+templateDraft(a)+"”";src.textContent="Preview agent · connect a key for live AI drafting";src.className="ai-src";actions.style.display="flex";});
   }
   function copyText(t){try{navigator.clipboard.writeText(t);}catch(e){var ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");}catch(e2){}document.body.removeChild(ta);}}
 
@@ -654,12 +654,12 @@
         '<div class="an-card"><div class="k">Confidence</div><div class="v big">'+(parseInt(a.confidence,10)||0)+'%</div></div>'+
         '<div class="an-card"><div class="k">Target persona</div><div class="v">'+esc(a.persona||"—")+'</div></div>'+
       '</div>'+
-      '<div class="an-angle"><b>Suggested angle:</b> '+esc(a.angle||"")+'<div class="an-rationale">'+esc(a.rationale||"")+' · '+(live?'<span style="color:var(--good)">✨ Analyzed by Claude</span>':'Heuristic analysis · connect the AI backend for live Claude')+'</div></div>';
+      '<div class="an-angle"><b>Suggested angle:</b> '+esc(a.angle||"")+'<div class="an-rationale">'+esc(a.rationale||"")+' · '+(live?'<span style="color:var(--good)">✨ Analyzed by your AI agent</span>':'Preview agent · connect a key for live AI analysis')+'</div></div>';
   }
   function runAnalyzer(){
     var text=$("an-input").value.trim();
     if(!text){$("an-input").focus();return;}
-    var r=$("an-result");r.className="an-result show";r.innerHTML='<span class="ai-load">✨ Claude is analyzing the signal</span>';
+    var r=$("an-result");r.className="an-result show";r.innerHTML='<span class="ai-load">✨ Your AI agent is analyzing the signal</span>';
     callBackend("signal",{text:text,client:current.client,valueProp:current.pitch})
       .then(function(txt){var obj;try{obj=JSON.parse(txt.replace(/^```json\s*|\s*```$/g,""));}catch(e){obj=null;}
         if(obj&&obj.signal){renderAnalysis(obj,true);}else{renderAnalysis(fallbackAnalyze(text),false);}})
