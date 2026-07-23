@@ -168,6 +168,24 @@
   .copy-btn:hover{background:rgba(45,212,191,.10)}
   @media (max-width:640px){.an-cards{grid-template-columns:1fr}}
 
+  /* ---------- agents online + live activity ---------- */
+  .agents-card h4{display:flex;align-items:center;gap:8px}
+  .live-dot{width:8px;height:8px;border-radius:50%;background:var(--good);box-shadow:0 0 0 0 rgba(61,220,151,.6);animation:livepulse 1.8s ease-out infinite}
+  @keyframes livepulse{0%{box-shadow:0 0 0 0 rgba(61,220,151,.5)}100%{box-shadow:0 0 0 7px rgba(61,220,151,0)}}
+  .agents-list{display:flex;flex-direction:column;gap:9px;margin-bottom:13px}
+  .agent-row{display:flex;align-items:center;gap:9px}
+  .agent-row .a-dot{width:8px;height:8px;border-radius:50%;flex:none;position:relative}
+  .agent-row.working .a-dot:after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1.5px solid currentColor;opacity:.5;animation:pulse 1.3s ease-out infinite}
+  .agent-row .a-name{font-size:12.5px;font-weight:700}
+  .agent-row .a-stat{font-size:11px;color:var(--muted-2);margin-left:auto;font-family:var(--mono);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .activity-head{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted-2);font-weight:700;border-top:1px solid var(--line);padding-top:11px;margin-bottom:8px}
+  .activity{display:flex;flex-direction:column;gap:7px;min-height:120px}
+  .act-line{display:flex;align-items:baseline;gap:7px;font-size:11px;line-height:1.4;opacity:0;transform:translateY(-4px);animation:actin .4s ease forwards}
+  @keyframes actin{to{opacity:1;transform:none}}
+  .act-line .act-ag{font-weight:700;white-space:nowrap}
+  .act-line .act-txt{color:var(--muted);flex:1;min-width:0}
+  .act-line .act-time{color:var(--muted-2);font-family:var(--mono);font-size:9.5px;white-space:nowrap}
+
   /* ---------- pipeline ---------- */
   .pipeline{display:flex;flex-direction:column;gap:10px}
   .acct{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:14px 15px;opacity:0;transform:translateY(8px);
@@ -301,11 +319,11 @@
       <div class="orb"><i></i><span class="ring"></span></div>
       <div class="status" id="status">Booting prospecting agent<span class="cursor"></span></div>
       <div class="stage-track" id="stages">
-        <span class="stage" data-s="scan">Scan</span>
-        <span class="stage" data-s="signal">Detect signal</span>
-        <span class="stage" data-s="persona">Match persona</span>
-        <span class="stage" data-s="draft">Draft outreach</span>
-        <span class="stage" data-s="verify">Verify</span>
+        <span class="stage" data-s="scan">Scout</span>
+        <span class="stage" data-s="signal">Analyst</span>
+        <span class="stage" data-s="persona">Matcher</span>
+        <span class="stage" data-s="draft">Writer</span>
+        <span class="stage" data-s="verify">Verifier</span>
       </div>
     </div>
   </div>
@@ -359,6 +377,12 @@
       <div class="pipe-empty" id="pipe-empty"><b>No accounts match these filters.</b><br>Try clearing the search or lowering the confidence threshold.</div>
     </div>
     <aside class="side">
+      <div class="card agents-card">
+        <h4>Agents online <span class="live-dot" title="live"></span></h4>
+        <div class="agents-list" id="agents-list"></div>
+        <div class="activity-head">Live activity</div>
+        <div class="activity" id="activity"></div>
+      </div>
       <div class="card"><h4 id="lib-title">Signal library</h4><div class="leg" id="legend"></div></div>
       <div class="card"><h4>Persona groups</h4><div class="pg-list" id="pg-list"></div></div>
       <div class="card"><h4>Coverage regions</h4><div class="regions" id="regions"></div></div>
@@ -519,6 +543,29 @@
   var current=null;   // current config
   var runToken=0;     // cancels stale animations
 
+  var POOLS=null;
+  function makeAccount(){
+    var industries=POOLS.industries,regions=POOLS.regions,signals=POOLS.signals,personas=POOLS.personas,used=POOLS.used;
+    var ind=pick(industries);
+    var sufs=IND_SUF[ind.toLowerCase()]||GEN_SUF;
+    var name,guard=0;
+    do{ name=pick(PREFIX)+" "+pick(sufs); guard++; }while(used[name]&&guard<60);
+    used[name]=1;
+    var region=pick(regions);
+    var sigPair=pick(signals); var sigName=sigPair[0];
+    var lib=LIB[sigName.toLowerCase()]; var w=lib?lib.w:(0.6+rnd()*0.25);
+    var ctx={company:name,city:region.replace(/^.*– /,""),sig:sigName,seat:(ri(12,80)*100).toLocaleString("en-US"),
+      size:ri(6,22),q:ri(1,4),cov:(ri(15,45)*100).toLocaleString("en-US"),d:ri(2,60),pc:ri(15,45),n:ri(2,6),num:ri(3,12),
+      ser:pick(["B","C","D","E"]),cloud:pick(["AWS","Azure","GCP"])};
+    var evidence=fillEv(lib?pick(lib.ev):pick(GEN_EV),ctx);
+    var src=fillEv(lib?pick(lib.src):pick(GEN_SRC),ctx);
+    var pg=pick(personas);
+    var title=pg.titles.length?pick(pg.titles):"Decision maker";
+    var contact=pick(FIRST)+" "+pick(LAST);
+    var conf=Math.round(52+w*32+(rnd()*14-6)); conf=Math.max(58,Math.min(96,conf));
+    return {name:name,ind:ind,region:region,sigName:sigName,angle:sigPair[1],evidence:evidence,src:src,
+      pg:pg,title:title,contact:contact,conf:conf,initials:name.split(" ").slice(0,2).map(function(x){return x[0];}).join("")};
+  }
   function buildAccounts(c,seed){
     rnd=mulberry32(seed);
     var industries=c.industries.length?c.industries:["Enterprise"];
@@ -526,30 +573,9 @@
     var signals=c.signals.length?c.signals:[["Growth signal",""]];
     var personas=(c.personas.length?c.personas:[["Buyer","Head, Director, VP"]]).map(function(p,i){
       return {name:p[0],titles:p[1].split(",").map(function(t){return t.trim();}).filter(Boolean),color:PG_COLORS[i%PG_COLORS.length],id:i};});
-    var used={}, accts=[];
-    for(var i=0;i<c.count;i++){
-      var ind=pick(industries);
-      var sufs=IND_SUF[ind.toLowerCase()]||GEN_SUF;
-      var name; var guard=0;
-      do{ name=pick(PREFIX)+" "+pick(sufs); guard++; }while(used[name]&&guard<40);
-      used[name]=1;
-      var region=pick(regions);
-      var sigPair=pick(signals);
-      var sigName=sigPair[0];
-      var lib=LIB[sigName.toLowerCase()];
-      var w=lib?lib.w:(0.6+rnd()*0.25);
-      var ctx={company:name,city:region.replace(/^.*– /,""),sig:sigName,seat:(ri(12,80)*100).toLocaleString("en-US"),
-        size:ri(6,22),q:ri(1,4),cov:(ri(15,45)*100).toLocaleString("en-US"),d:ri(2,60),pc:ri(15,45),n:ri(2,6),num:ri(3,12),
-        ser:pick(["B","C","D","E"]),cloud:pick(["AWS","Azure","GCP"])};
-      var evidence=fillEv(lib?pick(lib.ev):pick(GEN_EV),ctx);
-      var src=fillEv(lib?pick(lib.src):pick(GEN_SRC),ctx);
-      var pg=pick(personas);
-      var title=pg.titles.length?pick(pg.titles):"Decision maker";
-      var contact=pick(FIRST)+" "+pick(LAST);
-      var conf=Math.round(52+w*32+(rnd()*14-6)); conf=Math.max(58,Math.min(96,conf));
-      accts.push({name:name,ind:ind,region:region,sigName:sigName,angle:sigPair[1],evidence:evidence,src:src,
-        pg:pg,title:title,contact:contact,conf:conf,initials:name.split(" ").slice(0,2).map(function(x){return x[0];}).join("")});
-    }
+    POOLS={industries:industries,regions:regions,signals:signals,personas:personas,used:{}};
+    var accts=[];
+    for(var i=0;i<c.count;i++){ accts.push(makeAccount()); }
     return {accts:accts,personas:personas,signals:signals};
   }
 
@@ -578,7 +604,7 @@
         '<div class="draft-body"></div>'+
         '<div class="draft-actions"><button class="copy-btn">Copy</button><span class="ai-src"></span></div>'+
         '<div class="foot">Angle: '+ang+'</div></div>';
-    el._drafted=false;
+    el._drafted=false; el._acct=a;
     el.querySelector(".draft-btn").addEventListener("click",function(e){
       e.stopPropagation();var d=el.querySelector(".draft");
       if(d.classList.contains("open")){d.classList.remove("open");this.textContent="✨ Draft with AI";return;}
@@ -726,8 +752,32 @@
     $("lib-title").textContent="Signal library";
   }
 
-  /* ================= agent choreography ================= */
+  /* ================= agents + live activity ================= */
   var stagesEl,statusEl,pipeline,pipeMeta;
+  var AGENTS=[
+    {id:"scout",name:"Scout",color:"#2dd4bf",idle:"monitoring sources"},
+    {id:"analyst",name:"Analyst",color:"#f2c14e",idle:"scoring signals"},
+    {id:"writer",name:"Writer",color:"#8b9bf9",idle:"drafting queue"},
+    {id:"verifier",name:"Verifier",color:"#3ddc97",idle:"confirming"}
+  ];
+  var AGC={scout:"#2dd4bf",analyst:"#f2c14e",matcher:"#8b9bf9",writer:"#8b9bf9",verifier:"#3ddc97"};
+  function renderAgents(){
+    var el=$("agents-list");if(!el)return;el.innerHTML="";
+    AGENTS.forEach(function(g){
+      var row=document.createElement("div");row.className="agent-row";row.id="ag-"+g.id;row.style.color=g.color;
+      row.innerHTML='<span class="a-dot" style="background:'+g.color+'"></span><span class="a-name">'+g.name+'</span><span class="a-stat">'+g.idle+'</span>';
+      el.appendChild(row);});
+  }
+  function setAgent(id,text,working){
+    var row=$("ag-"+id);if(!row)return;row.querySelector(".a-stat").textContent=text;
+    if(working)row.classList.add("working");else row.classList.remove("working");}
+  function clock(){try{return new Date().toLocaleTimeString([],{hour12:false});}catch(e){return "";}}
+  function pushActivity(agent,color,text){
+    var el=$("activity");if(!el)return;
+    var line=document.createElement("div");line.className="act-line";
+    line.innerHTML='<span class="act-ag" style="color:'+color+'">'+agent+'</span><span class="act-txt">'+text+'</span><span class="act-time">'+clock()+'</span>';
+    el.insertBefore(line,el.firstChild);
+    while(el.children.length>7)el.removeChild(el.lastChild);}
   function setStage(key){
     var order=["scan","signal","persona","draft","verify"],idx=order.indexOf(key);
     [].forEach.call(stagesEl.children,function(s,i){s.classList.remove("on","done");if(i<idx)s.classList.add("done");if(i===idx)s.classList.add("on");});
@@ -740,42 +790,73 @@
   function run(data){
     var token=++runToken;
     pipeline.innerHTML="";cAcct=cSig=cPer=cDraft=confSum=0;refreshStats();
-    setStage("scan");statusEl.innerHTML="Loading ICP · "+current.industries.length+" industries · "+current.regions.length+" regions<span class=\"cursor\"></span>";
+    renderAgents();if($("activity"))$("activity").innerHTML="";
+    setStage("scan");statusEl.innerHTML="Deploying agents · loading ICP · "+current.industries.length+" industries · "+current.regions.length+" regions<span class=\"cursor\"></span>";
     var i=0;
     function step(){
       if(token!==runToken)return;
       if(i>=data.accts.length){finish(token);return;}
       var a=data.accts[i],card=buildCard(a,i);pipeline.appendChild(card);applyFilters();
-      setStage("scan");statusEl.innerHTML="Scanning "+a.name+" · "+a.region+'<span class="cursor"></span>';
-      setTimeout(function(){if(token!==runToken)return;setStage("signal");statusEl.innerHTML="Signal detected: "+a.sigName+'<span class="cursor"></span>';
+      setStage("scan");setAgent("scout","scanning "+a.region,true);statusEl.innerHTML="🔍 Scout agent scanning "+a.name+" · "+a.region+'<span class="cursor"></span>';
+      setTimeout(function(){if(token!==runToken)return;setStage("signal");setAgent("scout","monitoring sources");setAgent("analyst","scoring "+a.sigName,true);
+        statusEl.innerHTML="📊 Analyst agent scored: "+a.sigName+'<span class="cursor"></span>';
         requestAnimationFrame(function(){card.classList.add("show");});cAcct++;cSig++;confSum+=a.conf;refreshStats();},70);
-      setTimeout(function(){if(token!==runToken)return;setStage("persona");statusEl.innerHTML="Matched persona: "+a.title+'<span class="cursor"></span>';cPer++;refreshStats();},150);
-      setTimeout(function(){if(token!==runToken)return;setStage("draft");statusEl.innerHTML="Drafting outreach for "+a.contact.split(" ")[0]+"…<span class=\"cursor\"></span>";},210);
-      setTimeout(function(){if(token!==runToken)return;setStage("verify");statusEl.innerHTML="Verified · "+a.conf+"% confidence<span class=\"cursor\"></span>";cDraft++;refreshStats();},260);
-      pipeMeta.textContent="Agent working… "+(i+1)+" / "+data.accts.length;
+      setTimeout(function(){if(token!==runToken)return;setStage("persona");setAgent("analyst","scoring signals");
+        statusEl.innerHTML="🎯 Matcher agent matched: "+a.title+'<span class="cursor"></span>';cPer++;refreshStats();},150);
+      setTimeout(function(){if(token!==runToken)return;setStage("draft");setAgent("writer","drafting for "+a.contact.split(" ")[0],true);
+        statusEl.innerHTML="✍️ Writer agent drafting outreach for "+a.contact.split(" ")[0]+"…<span class=\"cursor\"></span>";},210);
+      setTimeout(function(){if(token!==runToken)return;setStage("verify");setAgent("writer","drafting queue");setAgent("verifier","confirming "+a.name,true);
+        statusEl.innerHTML="✓ Verifier agent confirmed "+a.name+" · "+a.conf+"%<span class=\"cursor\"></span>";cDraft++;refreshStats();
+        pushActivity("Verifier",AGC.verifier,'confirmed <b style="color:var(--text)">'+a.name+'</b> · '+a.sigName+' · '+a.conf+'%');
+        setTimeout(function(){setAgent("verifier","confirming");},250);},260);
+      pipeMeta.textContent="Agents working… "+(i+1)+" / "+data.accts.length;
       i++; setTimeout(step,ri(70,140));
     }
     setTimeout(step,700);
-    // stash for live loop
     run._data=data;run._token=token;
   }
   function finish(token){
     [].forEach.call(stagesEl.children,function(s){s.classList.remove("on");s.classList.add("done");});
-    statusEl.innerHTML="Pipeline ready · "+run._data.accts.length+" verified accounts · watching for new signals<span class=\"cursor\"></span>";
-    pipeMeta.textContent=run._data.accts.length+" verified accounts";
+    AGENTS.forEach(function(g){setAgent(g.id,g.idle,false);});
+    statusEl.innerHTML="● Agents live · monitoring "+run._data.accts.length+" accounts for new signals<span class=\"cursor\"></span>";
+    pipeMeta.textContent=run._data.accts.length+" accounts · live";
     sortCards($("fx-sort").value); applyFilters();
     liveLoop(token);
   }
+  var LIVE_CAP=16, liveI=-1;
+  function baseStatus(){return "● Agents live · monitoring "+run._data.accts.length+" accounts for new signals<span class=\"cursor\"></span>";}
   function liveLoop(token){
+    var added=0;
     setTimeout(function tick(){
       if(token!==runToken)return;
-      var cards=pipeline.children;
-      if(cards.length){var k=ri(0,cards.length-1),a=run._data.accts[k],card=cards[k];
-        card.classList.add("flash");statusEl.innerHTML="Re-checking "+a.name+" · signal still live<span class=\"cursor\"></span>";
-        setTimeout(function(){if(token!==runToken)return;card.classList.remove("flash");
-          statusEl.innerHTML="Pipeline ready · "+run._data.accts.length+" verified accounts · watching for new signals<span class=\"cursor\"></span>";},1400);}
-      setTimeout(tick,ri(4500,7500));
-    },3000);
+      if(rnd()<0.5 && added<LIVE_CAP){
+        added++;
+        var a=makeAccount(); run._data.accts.push(a);
+        var card=buildCard(a,liveI--); pipeline.insertBefore(card,pipeline.firstChild);
+        requestAnimationFrame(function(){card.classList.add("show");});
+        card.classList.add("flash");setTimeout(function(){card.classList.remove("flash");},1400);
+        setAgent("scout","surfaced "+a.name,true);
+        statusEl.innerHTML="🔍 Scout agent surfaced "+a.name+" · new "+a.sigName+" signal<span class=\"cursor\"></span>";
+        pushActivity("Scout",AGC.scout,'surfaced <b style="color:var(--text)">'+a.name+'</b> · '+a.sigName);
+        cAcct++;cSig++;cPer++;confSum+=a.conf;refreshStats();sortCards($("fx-sort").value);applyFilters();
+        setTimeout(function(){if(token!==runToken)return;setAgent("scout","monitoring sources");setAgent("writer","drafting queue");
+          cDraft++;refreshStats();pushActivity("Writer",AGC.writer,'drafted outreach for <b style="color:var(--text)">'+a.name+'</b>');
+          statusEl.innerHTML=baseStatus();},900);
+      } else {
+        var cards=pipeline.children;
+        if(cards.length){var k=ri(0,cards.length-1),card=cards[k];
+          var a=card._acct||run._data.accts[0];
+          card.classList.add("flash");
+          var acts=[["Analyst",AGC.analyst,'re-scored <b style="color:var(--text)">'+a.name+'</b> · signal still live'],
+                    ["Verifier",AGC.verifier,'re-verified <b style="color:var(--text)">'+a.name+'</b> · '+a.conf+'%'],
+                    ["Scout",AGC.scout,'re-checked <b style="color:var(--text)">'+a.name+'</b> · '+a.region]];
+          var act=acts[ri(0,acts.length-1)];
+          pushActivity(act[0],act[1],act[2]);
+          statusEl.innerHTML=act[0]+" agent re-checking "+a.name+"…<span class=\"cursor\"></span>";
+          setTimeout(function(){if(token!==runToken)return;card.classList.remove("flash");statusEl.innerHTML=baseStatus();},1400);}
+      }
+      setTimeout(tick,ri(3500,6000));
+    },2600);
   }
 
   /* ================= orchestration ================= */
@@ -865,7 +946,7 @@
   /* ================= platform default ================= */
   function platformConfig(){return {
     client:"", accent:"#2dd4bf", count:56,
-    plan:"Signal Engine · live workspace — 🎯 Brief the Agent for your prospect",
+    plan:"Signal Engine · your AI agents are working live",
     pitch:"LaCleo scans your market for live buying signals, matches the right buyer personas, and drafts a calibrated first line. Brief the Agent on any prospect to see a tailored pipeline.",
     industries:["Enterprise IT","SaaS","Fintech","Healthcare","Manufacturing","Retail","Logistics","BFSI"],
     regions:["Bengaluru","Mumbai","London","New York","Singapore","Berlin","Dubai","Sydney"],
