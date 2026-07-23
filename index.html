@@ -121,6 +121,22 @@
   .mini-btn{font-size:11px;font-weight:700;color:var(--teal);background:transparent;border:1px solid var(--line-2);padding:5px 10px;border-radius:8px;cursor:pointer}
   .mini-btn:hover{background:rgba(45,212,191,.10)}
 
+  /* ---------- filter bar ---------- */
+  .filterbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;border:1px solid var(--line);border-radius:12px;
+    background:var(--panel);padding:11px 13px;margin-bottom:12px}
+  .fx-search{position:relative;flex:1;min-width:180px}
+  .fx-search input{width:100%;background:var(--bg-2);border:1px solid var(--line);border-radius:9px;color:var(--text);
+    font-family:var(--font);font-size:12.5px;padding:8px 11px 8px 30px}
+  .fx-search:before{content:"🔍";position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:12px;opacity:.7}
+  .filterbar select{background:var(--bg-2);border:1px solid var(--line);border-radius:9px;color:var(--text);font-size:12px;padding:8px 9px;font-family:var(--font);cursor:pointer;max-width:170px}
+  .filterbar select:focus,.fx-search input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-glow)}
+  .fx-conf{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap}
+  .fx-conf b{color:var(--teal);font-variant-numeric:tabular-nums;min-width:30px}
+  .fx-conf input[type=range]{width:96px;accent-color:var(--teal);cursor:pointer}
+  .fx-count{font-size:11.5px;color:var(--muted-2);font-weight:700;white-space:nowrap;margin-left:auto}
+  .pipe-empty{display:none;border:1px dashed var(--line-2);border-radius:12px;background:var(--panel);padding:26px 16px;text-align:center;color:var(--muted);font-size:13px}
+  .pipe-empty b{color:var(--text)}
+
   /* ---------- pipeline ---------- */
   .pipeline{display:flex;flex-direction:column;gap:10px}
   .acct{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:14px 15px;opacity:0;transform:translateY(8px);
@@ -278,7 +294,18 @@
           <button class="mini-btn" id="btn-regen">↻ Re-scan</button>
         </div>
       </div>
+      <div class="filterbar">
+        <div class="fx-search"><input type="text" id="fx-search" placeholder="Search company, contact, or signal…"></div>
+        <select id="fx-signal"><option value="">All signals</option></select>
+        <select id="fx-persona"><option value="">All personas</option></select>
+        <select id="fx-region"><option value="">All regions</option></select>
+        <div class="fx-conf"><span>Min conf.</span><input type="range" id="fx-conf" min="0" max="95" step="5" value="0"><b id="fx-confval">0%</b></div>
+        <select id="fx-sort"><option value="def">Sort: agent order</option><option value="conf">Confidence ↓</option><option value="name">Company A–Z</option></select>
+        <span class="fx-count" id="fx-count"></span>
+        <button class="mini-btn" id="fx-clear">Clear</button>
+      </div>
       <div class="pipeline" id="pipeline"></div>
+      <div class="pipe-empty" id="pipe-empty"><b>No accounts match these filters.</b><br>Try clearing the search or lowering the confidence threshold.</div>
     </div>
     <aside class="side">
       <div class="card"><h4 id="lib-title">Signal library</h4><div class="leg" id="legend"></div></div>
@@ -504,8 +531,11 @@
   function draftClause(a){var s=a.sigName.toLowerCase();
     if(a.angle) return "is showing "+a.sigName.toLowerCase();
     return "on the "+a.sigName.toLowerCase()+" front";}
-  function buildCard(a){
+  function buildCard(a,i){
     var el=document.createElement("div");el.className="acct";
+    el.dataset.conf=a.conf; el.dataset.signal=a.sigName; el.dataset.persona=a.pg.name; el.dataset.region=a.region;
+    el.dataset.name=a.name.toLowerCase(); el.dataset.i=i;
+    el.dataset.text=(a.name+" "+a.contact+" "+a.title+" "+a.sigName+" "+a.evidence+" "+a.region).toLowerCase();
     var ang=a.angle||("Lead with the "+a.sigName.toLowerCase()+" hook while it's fresh — a timely, specific reason to reach out.");
     el.innerHTML=
       '<div class="acct-top"><div class="acct-ava">'+a.initials+'</div>'+
@@ -580,7 +610,7 @@
     function step(){
       if(token!==runToken)return;
       if(i>=data.accts.length){finish(token);return;}
-      var a=data.accts[i],card=buildCard(a);pipeline.appendChild(card);
+      var a=data.accts[i],card=buildCard(a,i);pipeline.appendChild(card);applyFilters();
       setStage("scan");statusEl.innerHTML="Scanning "+a.name+" · "+a.region+'<span class="cursor"></span>';
       setTimeout(function(){if(token!==runToken)return;setStage("signal");statusEl.innerHTML="Signal detected: "+a.sigName+'<span class="cursor"></span>';
         requestAnimationFrame(function(){card.classList.add("show");});cAcct++;cSig++;confSum+=a.conf;refreshStats();},70);
@@ -598,6 +628,7 @@
     [].forEach.call(stagesEl.children,function(s){s.classList.remove("on");s.classList.add("done");});
     statusEl.innerHTML="Pipeline ready · "+run._data.accts.length+" verified accounts · watching for new signals<span class=\"cursor\"></span>";
     pipeMeta.textContent=run._data.accts.length+" verified accounts";
+    sortCards($("fx-sort").value); applyFilters();
     liveLoop(token);
   }
   function liveLoop(token){
@@ -624,8 +655,46 @@
     renderChrome(config);
     var data=buildAccounts(config,seed==null?nextSeed():seed);
     renderSide(data);
+    renderFilters(data);
     run(data);
     try{localStorage.setItem("lacleo_demo_config",JSON.stringify(config));}catch(e){}
+  }
+
+  /* ---------- filters & sort ---------- */
+  function fillSelect(sel,items,label){
+    sel.innerHTML='<option value="">'+label+'</option>';
+    items.forEach(function(v){var o=document.createElement("option");o.value=v;o.textContent=v;sel.appendChild(o);});
+  }
+  function renderFilters(data){
+    fillSelect($("fx-signal"),data.signals.map(function(s){return s[0];}),"All signals");
+    fillSelect($("fx-persona"),data.personas.map(function(p){return p.name;}),"All personas");
+    fillSelect($("fx-region"),current.regions.slice(),"All regions");
+    $("fx-search").value="";$("fx-conf").value=0;$("fx-confval").textContent="0%";$("fx-sort").value="def";
+  }
+  function matchesCard(c){
+    if(!c.dataset||c.dataset.i===undefined)return true;
+    var q=$("fx-search").value.toLowerCase().trim(),sig=$("fx-signal").value,per=$("fx-persona").value,reg=$("fx-region").value,minc=+$("fx-conf").value;
+    if(q&&c.dataset.text.indexOf(q)<0)return false;
+    if(sig&&c.dataset.signal!==sig)return false;
+    if(per&&c.dataset.persona!==per)return false;
+    if(reg&&c.dataset.region!==reg)return false;
+    if(minc&&(+c.dataset.conf)<minc)return false;
+    return true;
+  }
+  function applyFilters(){
+    var kids=pipeline.children,shown=0,total=0;
+    for(var i=0;i<kids.length;i++){var c=kids[i];if(!c.classList||!c.classList.contains("acct"))continue;total++;
+      var ok=matchesCard(c);c.style.display=ok?"":"none";if(ok)shown++;}
+    var anyFilter=$("fx-search").value||$("fx-signal").value||$("fx-persona").value||$("fx-region").value||(+$("fx-conf").value)>0;
+    $("fx-count").textContent=anyFilter?("Showing "+shown+" of "+total):(total+" accounts");
+    $("pipe-empty").style.display=(shown===0&&total>0)?"block":"none";
+  }
+  function sortCards(mode){
+    var cards=[].slice.call(pipeline.children).filter(function(c){return c.classList&&c.classList.contains("acct");});
+    if(mode==="conf")cards.sort(function(a,b){return (+b.dataset.conf)-(+a.dataset.conf);});
+    else if(mode==="name")cards.sort(function(a,b){return a.dataset.name.localeCompare(b.dataset.name);});
+    else cards.sort(function(a,b){return (+a.dataset.i)-(+b.dataset.i);});
+    cards.forEach(function(c){pipeline.appendChild(c);});
   }
 
   /* ================= wire up ================= */
@@ -638,6 +707,14 @@
     $("drawer").classList.remove("open");$("toggle-cfg").textContent="⚙ Configure demo";
     window.scrollTo({top:0,behavior:"smooth"});});
   $("btn-regen").addEventListener("click",function(){ if(current) generate(current); });
+  // filter controls
+  ["fx-search","fx-signal","fx-persona","fx-region"].forEach(function(id){
+    $(id).addEventListener("input",applyFilters); $(id).addEventListener("change",applyFilters);});
+  $("fx-conf").addEventListener("input",function(){$("fx-confval").textContent=this.value+"%";applyFilters();});
+  $("fx-sort").addEventListener("change",function(){sortCards(this.value);applyFilters();});
+  $("fx-clear").addEventListener("click",function(){
+    $("fx-search").value="";$("fx-signal").value="";$("fx-persona").value="";$("fx-region").value="";
+    $("fx-conf").value=0;$("fx-confval").textContent="0%";$("fx-sort").value="def";sortCards("def");applyFilters();});
   $("btn-blank").addEventListener("click",function(){
     fillForm({client:"",plan:"Growth — Verified Pipeline · USD 599/mo · 50–60 accounts",pitch:"",
       industries:["Enterprise IT","SaaS","Manufacturing","Healthcare"],regions:["Bengaluru","Mumbai","London","New York"],
