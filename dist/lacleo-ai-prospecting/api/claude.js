@@ -2,7 +2,7 @@
 // ---------------------------------------------------------------
 // This makes the AI features (outreach drafting + signal analysis)
 // call the real Claude API. To enable it:
-//   1. Deploy the `lacleo-platform` folder to Vercel.
+//   1. Deploy the `lacleo-ai-prospecting` folder to Vercel.
 //   2. In the Vercel project → Settings → Environment Variables, add:
 //        ANTHROPIC_API_KEY = <your Anthropic API key>
 //      (optional) CLAUDE_MODEL = claude-sonnet-5   // or claude-haiku-4-5-20251001

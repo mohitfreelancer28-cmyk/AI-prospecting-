@@ -26,7 +26,7 @@ The app auto-detects which mode is available and shows it in the status chip
 **Option A — Vercel + GitHub (easiest)**
 1. Push this folder to a GitHub repo (already done if you're reading this in the repo).
 2. In Vercel: **Add New Project → Import** the repo, set the **Root Directory** to
-   `dist/lacleo-platform`.
+   `dist/lacleo-ai-prospecting`.
 3. **Settings → Environment Variables**, add:
    - `ANTHROPIC_API_KEY` = your Anthropic API key
    - *(optional)* `CLAUDE_MODEL` = `claude-sonnet-5` (default) or `claude-haiku-4-5-20251001`
@@ -35,7 +35,7 @@ The app auto-detects which mode is available and shows it in the status chip
 
 **Option B — Vercel CLI**
 ```bash
-cd dist/lacleo-platform
+cd dist/lacleo-ai-prospecting
 vercel                     # first deploy
 vercel env add ANTHROPIC_API_KEY   # paste your key
 vercel --prod              # redeploy live
