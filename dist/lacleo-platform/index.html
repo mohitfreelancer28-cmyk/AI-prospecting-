@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>LaCleo · AI Prospecting — Live Demo</title>
+<title>LaCleo · AI Prospecting Platform</title>
 <style>
   /* ---------- LaCleo teal design system ---------- */
   :root{
@@ -248,17 +248,17 @@
       <div><h1>LaCleo</h1><div class="sub">AI Prospecting · Verified Pipeline</div></div>
     </div>
     <div class="top-right">
-      <span class="chip" id="client-chip"><span class="h-logo">◆</span> Prospecting platform · Demo</span>
+      <span class="chip" id="client-chip"><span class="h-logo">◆</span> Signal Engine · Live</span>
       <span class="badge-demo"><span class="dot"></span> AI-powered</span>
-      <button class="cfg-btn" id="toggle-cfg">⚙ Configure demo</button>
+      <button class="cfg-btn" id="toggle-cfg">🎯 Brief the Agent</button>
     </div>
   </div>
 
   <!-- CONFIG DRAWER -->
   <div class="drawer" id="drawer">
     <div class="drawer-inner">
-      <h3>Configure this demo</h3>
-      <p class="hint">Set it up for the prospect you're about to call, then hit <b>Generate pipeline</b> — the agent rebuilds a tailored, seeded pipeline live. Your setup is saved on this device.</p>
+      <h3>Brief your prospecting agent</h3>
+      <p class="hint">Point the agent at the prospect you're about to call, then hit <b>Deploy Agent</b> — it builds a tailored pipeline live. Your brief is saved on this device.</p>
       <div class="form-grid">
         <div class="field"><label>Client / prospect name <span class="tip">leave blank for the platform view</span></label><input type="text" id="f-client" placeholder="e.g. Acme Corp"></div>
         <div class="field"><label>Plan &amp; price line</label><input type="text" id="f-plan" placeholder="Growth — Verified Pipeline · USD 599/mo · 50–60 accounts"></div>
@@ -278,8 +278,8 @@
         </div>
       </div>
       <div class="drawer-actions">
-        <button class="btn btn-primary" id="btn-generate">⚡ Generate pipeline</button>
-        <button class="btn btn-ghost" id="btn-blank">Reset to platform view</button>
+        <button class="btn btn-primary" id="btn-generate">⚡ Deploy Agent</button>
+        <button class="btn btn-ghost" id="btn-blank">Reset brief</button>
         <div class="preset-wrap">
           <label for="f-preset">Load preset</label>
           <select id="f-preset">
@@ -371,7 +371,7 @@
     <div>LaCleo — AI prospecting for B2B revenue teams</div>
   </div>
   <div class="disclaimer">
-    Pre-loaded pipeline accounts are illustrative sample data — connect your sources (Apollo, Clay, LinkedIn, your CRM) for live, source-verified accounts. The AI Signal Analyzer and outreach drafting run on Claude when the backend is configured (see <code>api/claude.js</code>); otherwise they use built-in smart templates so the demo works everywhere.
+    Pre-loaded pipeline accounts are illustrative sample data — connect your sources (Apollo, Clay, LinkedIn, your CRM) for live, source-verified accounts. The AI Signal Analyzer and outreach drafting run on Claude when the backend is configured (see <code>api/claude.js</code>); otherwise they use built-in smart templates so it works everywhere.
   </div>
 </div>
 
@@ -603,12 +603,12 @@
   }
   function probeBackend(){
     var el=$("ai-status");
-    if(!backendUsable()){el.textContent="Demo mode · smart templates (deploy with a key for live Claude)";el.className="ai-status tpl";return;}
+    if(!backendUsable()){el.textContent="Template engine · add a key for live Claude";el.className="ai-status tpl";return;}
     fetch("/api/claude",{method:"GET"}).then(function(r){return r.ok?r.json():null;}).then(function(d){
       if(d&&d.backend&&d.hasKey){AI_LIVE=true;el.textContent="AI backend: Live (Claude)";el.className="ai-status live";}
       else if(d&&d.backend){AI_LIVE=false;el.textContent="AI backend found · add ANTHROPIC_API_KEY to go live";el.className="ai-status tpl";}
       else{throw new Error("no backend");}
-    }).catch(function(){AI_LIVE=false;el.textContent="Demo mode · smart templates (deploy with a key for live Claude)";el.className="ai-status tpl";});
+    }).catch(function(){AI_LIVE=false;el.textContent="Template engine · add a key for live Claude";el.className="ai-status tpl";});
   }
   function aiDraft(el,a){
     var body=el.querySelector(".draft-body"),actions=el.querySelector(".draft-actions"),src=el.querySelector(".ai-src");
@@ -709,7 +709,7 @@
   function renderChrome(c){
     var isPlatform=!c.client;
     if(isPlatform){
-      $("client-chip").innerHTML='<span class="h-logo">◆</span> Prospecting platform · Demo';
+      $("client-chip").innerHTML='<span class="h-logo">◆</span> Signal Engine · Live';
       $("hero-h2").innerHTML='A verified pipeline, <span class="accent">built by an AI prospecting agent</span>';
       $("footer-prepared").textContent="LaCleo · AI Prospecting Platform";
       document.title="LaCleo · AI Prospecting Platform";
@@ -836,10 +836,10 @@
   stagesEl=$("stages");statusEl=$("status");pipeline=$("pipeline");pipeMeta=$("pipe-meta");
   $("toggle-cfg").addEventListener("click",function(){
     var d=$("drawer");d.classList.toggle("open");
-    this.textContent=d.classList.contains("open")?"✕ Close":"⚙ Configure demo";});
+    this.textContent=d.classList.contains("open")?"✕ Close":"🎯 Brief the Agent";});
   $("btn-generate").addEventListener("click",function(){
     var c=toConfig();fillForm(c);generate(c);
-    $("drawer").classList.remove("open");$("toggle-cfg").textContent="⚙ Configure demo";
+    $("drawer").classList.remove("open");$("toggle-cfg").textContent="🎯 Brief the Agent";
     window.scrollTo({top:0,behavior:"smooth"});});
   $("btn-regen").addEventListener("click",function(){ if(current) generate(current); });
   $("btn-export").addEventListener("click",exportCSV);
@@ -865,8 +865,8 @@
   /* ================= platform default ================= */
   function platformConfig(){return {
     client:"", accent:"#2dd4bf", count:56,
-    plan:"Verified Pipeline · demo workspace — ⚙ Configure for your prospect",
-    pitch:"LaCleo scans your market for live buying signals, matches the right buyer personas, and drafts a calibrated first line. Configure it for any prospect to see a tailored pipeline.",
+    plan:"Signal Engine · live workspace — 🎯 Brief the Agent for your prospect",
+    pitch:"LaCleo scans your market for live buying signals, matches the right buyer personas, and drafts a calibrated first line. Brief the Agent on any prospect to see a tailored pipeline.",
     industries:["Enterprise IT","SaaS","Fintech","Healthcare","Manufacturing","Retail","Logistics","BFSI"],
     regions:["Bengaluru","Mumbai","London","New York","Singapore","Berlin","Dubai","Sydney"],
     signals:[
