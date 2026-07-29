@@ -1,0 +1,954 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LaCleo Atlas · SMMART Transformation Radar</title>
+<style>
+  :root{
+    --bg:#050f0d; --bg-2:#0a1a17; --panel:#0d1f1b; --panel-2:#102723;
+    --glass:rgba(16,39,35,.55); --glass-2:rgba(13,31,27,.72); --glass-brd:rgba(45,212,191,.16);
+    --line:#173631; --line-2:#1f4a43;
+    --teal:#2dd4bf; --teal-600:#14b8a6; --teal-700:#0d9488; --teal-glow:rgba(45,212,191,.16);
+    --text:#e7f5f1; --muted:#8db3ab; --muted-2:#5f827b;
+    --amber:#f2a24e; --gold:#f2c14e; --rose:#f2758c; --good:#3ddc97; --violet:#a78bfa;
+    --vh:#f2758c; --high:#f2a24e; --med:#f2c14e; --low:#5f9e93; --vl:#5f827b;
+    --radius:15px; --shadow:0 24px 60px -24px rgba(0,0,0,.75);
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Helvetica,Arial,sans-serif;
+    --mono:"SF Mono",ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(1200px 640px at 84% -10%, var(--teal-glow), transparent 60%),
+      radial-gradient(960px 560px at 4% 2%, rgba(13,148,136,.10), transparent 55%),
+      radial-gradient(700px 500px at 60% 110%, rgba(167,139,250,.06), transparent 60%),
+      var(--bg);
+    color:var(--text); font-family:var(--font); -webkit-font-smoothing:antialiased; line-height:1.5; min-height:100vh;
+  }
+  a{color:inherit}
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:6px}
+  ::selection{background:rgba(45,212,191,.28)}
+
+  /* ---------- shell ---------- */
+  .shell{display:grid;grid-template-columns:230px 1fr;min-height:100vh}
+  .rail{position:sticky;top:0;height:100vh;border-right:1px solid var(--line);background:linear-gradient(180deg,rgba(10,26,23,.7),rgba(5,15,13,.9));
+    backdrop-filter:blur(10px);padding:18px 14px;display:flex;flex-direction:column;gap:4px;overflow-y:auto}
+  .brand{display:flex;align-items:center;gap:11px;padding:4px 6px 16px}
+  .logo{width:38px;height:38px;flex:none}.logo svg{width:38px;height:38px;display:block}
+  .brand h1{font-size:15px;margin:0;font-weight:800;letter-spacing:.2px}
+  .brand .sub{font-size:10px;color:var(--muted-2);letter-spacing:.4px;text-transform:uppercase}
+  .navlabel{font-size:9.5px;text-transform:uppercase;letter-spacing:.9px;color:var(--muted-2);font-weight:800;padding:14px 10px 6px}
+  .nav{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:11px;cursor:pointer;color:var(--muted);font-size:13px;font-weight:600;
+    border:1px solid transparent;transition:.15s;position:relative}
+  .nav:hover{color:var(--text);background:rgba(45,212,191,.06)}
+  .nav.on{color:var(--text);background:linear-gradient(90deg,rgba(45,212,191,.16),rgba(45,212,191,.04));border-color:var(--glass-brd)}
+  .nav.on:before{content:"";position:absolute;left:-14px;top:9px;bottom:9px;width:3px;border-radius:3px;background:var(--teal);box-shadow:0 0 12px var(--teal)}
+  .nav .ico{width:17px;text-align:center;flex:none;opacity:.9}
+  .nav .n{margin-left:auto;font-size:10px;font-weight:800;background:var(--panel-2);color:var(--muted);padding:1px 7px;border-radius:999px;border:1px solid var(--line)}
+  .nav.on .n{background:var(--teal);color:#04201c;border-color:var(--teal)}
+  .rail-foot{margin-top:auto;padding:12px 8px 4px;border-top:1px solid var(--line);font-size:10.5px;color:var(--muted-2)}
+  .rail-foot b{color:var(--muted)}
+
+  /* ---------- main ---------- */
+  .main{min-width:0;display:flex;flex-direction:column}
+  .topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;padding:13px 26px;
+    border-bottom:1px solid var(--line);background:rgba(5,15,13,.72);backdrop-filter:blur(14px)}
+  .crumb{font-size:13px;font-weight:700}.crumb small{color:var(--muted-2);font-weight:600}
+  .cmdk{margin-left:8px;display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:7px 12px;color:var(--muted-2);font-size:12.5px;cursor:pointer;min-width:230px}
+  .cmdk kbd{margin-left:auto;font-family:var(--mono);font-size:10px;background:var(--panel-2);border:1px solid var(--line-2);border-radius:5px;padding:1px 5px;color:var(--muted)}
+  .top-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .chip{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;padding:6px 11px;border-radius:999px;border:1px solid var(--line-2);background:var(--panel);color:var(--muted)}
+  .live-dot{width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 0 0 rgba(61,220,151,.5);animation:ping 1.8s infinite}
+  @keyframes ping{0%{box-shadow:0 0 0 0 rgba(61,220,151,.45)}100%{box-shadow:0 0 0 7px rgba(61,220,151,0)}}
+  .bell{position:relative;width:34px;height:34px;border-radius:10px;border:1px solid var(--line-2);background:var(--panel);display:grid;place-items:center;cursor:pointer;font-size:14px}
+  .bell b{position:absolute;top:-5px;right:-5px;background:var(--rose);color:#2a0810;font-size:9.5px;font-weight:800;border-radius:999px;padding:1px 5px}
+
+  /* ---------- ticker ---------- */
+  .ticker{display:flex;align-items:center;gap:0;border-bottom:1px solid var(--line);background:linear-gradient(90deg,rgba(45,212,191,.05),transparent);overflow:hidden;height:38px}
+  .ticker .tag{flex:none;display:flex;align-items:center;gap:7px;font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--teal);padding:0 14px;height:100%;border-right:1px solid var(--line);background:rgba(45,212,191,.06)}
+  .ticker .track{display:flex;gap:30px;white-space:nowrap;animation:scroll 42s linear infinite;padding-left:20px}
+  .ticker:hover .track{animation-play-state:paused}
+  @keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  .ticker .it{font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:8px}
+  .ticker .it b{color:var(--text);font-weight:700}
+  .dotv{width:7px;height:7px;border-radius:50%}
+
+  .page{padding:22px 26px 60px;max-width:1500px;width:100%}
+  .hidden{display:none!important}
+
+  /* ---------- glass panels & grid ---------- */
+  .panel{border:1px solid var(--glass-brd);border-radius:var(--radius);background:var(--glass);backdrop-filter:blur(12px);box-shadow:var(--shadow)}
+  .pad{padding:18px 20px}
+  .grid{display:grid;gap:16px}
+  .g-kpi{grid-template-columns:repeat(6,1fr)}
+  .g-2{grid-template-columns:1.6fr 1fr}
+  .g-3{grid-template-columns:repeat(3,1fr)}
+  .g-2e{grid-template-columns:1fr 1fr}
+  .sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .sh h3{margin:0;font-size:13.5px;font-weight:750;letter-spacing:.2px}
+  .sh .meta{font-size:11.5px;color:var(--muted-2)}
+  .hero{position:relative;overflow:hidden;padding:22px 24px;margin-bottom:16px}
+  .hero:before{content:"";position:absolute;inset:0;background:radial-gradient(620px 220px at 92% -20%,var(--teal-glow),transparent 60%);pointer-events:none}
+  .hero h2{margin:0 0 6px;font-size:22px;font-weight:800;letter-spacing:-.4px}
+  .hero h2 .accent{color:var(--teal)}
+  .hero p{margin:0;color:var(--muted);font-size:13.5px;max-width:820px}
+  .hero .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:15px}
+
+  /* KPI */
+  .kpi{padding:16px 17px;position:relative;overflow:hidden}
+  .kpi .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted-2);font-weight:800}
+  .kpi .v{font-size:26px;font-weight:820;letter-spacing:-.6px;margin-top:6px;font-variant-numeric:tabular-nums}
+  .kpi .v small{font-size:12px;color:var(--muted);font-weight:700}
+  .kpi.accent .v{color:var(--teal)}
+  .kpi .d{font-size:11px;font-weight:700;margin-top:4px}
+  .up{color:var(--good)}.down{color:var(--rose)}
+  .kpi .spark{position:absolute;right:12px;bottom:10px;opacity:.6}
+
+  /* meters / bars */
+  .meter{margin-bottom:11px}
+  .meter .lab{display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:5px;color:var(--muted)}
+  .meter .lab b{color:var(--text);font-variant-numeric:tabular-nums}
+  .bar{height:7px;border-radius:6px;background:var(--panel-2);overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--teal-700),var(--teal));box-shadow:0 0 10px var(--teal-glow);width:0;transition:width 1s cubic-bezier(.2,.8,.2,1)}
+
+  /* pills / badges */
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:750;padding:4px 10px;border-radius:999px;border:1px solid var(--line-2);color:var(--muted);background:var(--panel)}
+  .ptier{font-size:10.5px;font-weight:850;padding:3px 9px;border-radius:7px;letter-spacing:.4px}
+  .p1{background:rgba(242,117,140,.14);color:var(--rose);border:1px solid rgba(242,117,140,.4)}
+  .p2{background:rgba(242,162,78,.13);color:var(--amber);border:1px solid rgba(242,162,78,.36)}
+  .p3{background:rgba(242,193,78,.12);color:var(--gold);border:1px solid rgba(242,193,78,.32)}
+  .pd{background:rgba(95,130,123,.12);color:var(--muted);border:1px solid var(--line-2)}
+  .intent{font-size:9.5px;font-weight:850;text-transform:uppercase;letter-spacing:.5px;padding:2px 8px;border-radius:6px}
+  .i-vh{background:rgba(242,117,140,.16);color:var(--vh)} .i-h{background:rgba(242,162,78,.16);color:var(--high)}
+  .i-m{background:rgba(242,193,78,.15);color:var(--med)} .i-l{background:rgba(95,158,147,.16);color:var(--low)} .i-vl{background:rgba(95,130,123,.16);color:var(--vl)}
+
+  /* account rows/cards */
+  .arow{display:flex;align-items:center;gap:13px;padding:13px 15px;border-radius:12px;border:1px solid var(--line);background:var(--panel);cursor:pointer;transition:.15s;margin-bottom:9px}
+  .arow:hover{border-color:var(--glass-brd);background:var(--panel-2);transform:translateY(-1px)}
+  .alogo{width:38px;height:38px;flex:none;border-radius:10px;display:grid;place-items:center;font-weight:850;font-size:15px;color:#04201c;background:linear-gradient(150deg,var(--teal),var(--teal-700))}
+  .arow .nm{font-size:13.5px;font-weight:750}
+  .arow .mt{font-size:11px;color:var(--muted-2);margin-top:2px}
+  .arow .trig{font-size:11px;color:var(--muted);margin-top:3px}
+  .arow .rt{margin-left:auto;text-align:right;flex:none}
+  .arow .score{font-size:20px;font-weight:850;font-variant-numeric:tabular-nums}
+  .arow .score small{font-size:11px;color:var(--muted-2);font-weight:700}
+
+  /* donut / radar */
+  svg.chart{display:block;overflow:visible}
+  .legend{display:flex;flex-direction:column;gap:7px;font-size:11.5px}
+  .legend .li{display:flex;align-items:center;gap:8px;color:var(--muted)}
+  .legend .li b{margin-left:auto;color:var(--text);font-variant-numeric:tabular-nums}
+  .sw{width:9px;height:9px;border-radius:3px;flex:none}
+
+  /* recommendations */
+  .rec{display:flex;gap:12px;padding:12px 14px;border-radius:11px;border:1px solid var(--line);background:var(--panel);margin-bottom:9px}
+  .rec .num{width:24px;height:24px;flex:none;border-radius:8px;background:var(--teal);color:#04201c;font-weight:850;font-size:12px;display:grid;place-items:center}
+  .rec .tx{font-size:12.5px}.rec .tx b{color:var(--text)}
+  .rec .tx .why{color:var(--muted-2);font-size:11px;margin-top:3px}
+  .rec .go{margin-left:auto;align-self:center;font-size:11px;font-weight:750;color:var(--teal);border:1px solid var(--line-2);border-radius:8px;padding:5px 10px;cursor:pointer;white-space:nowrap}
+
+  /* signal cards */
+  .sig{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:14px 16px;margin-bottom:11px;transition:.15s}
+  .sig:hover{border-color:var(--glass-brd)}
+  .sig .top{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .sig .co{font-size:13px;font-weight:800}
+  .sig .ttl{font-size:12.5px;color:var(--text);font-weight:650;margin-top:7px}
+  .sig .ev{font-size:11.5px;color:var(--muted-2);margin-top:5px}
+  .sig .why{font-size:11.5px;color:var(--muted);margin-top:8px;padding-left:11px;border-left:2px solid var(--line-2)}
+  .sig .foot{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px;align-items:center}
+  .tagx{font-size:10.5px;font-weight:700;color:var(--muted);background:var(--panel-2);border:1px solid var(--line);border-radius:7px;padding:3px 8px}
+  .tagx b{color:var(--teal)}
+  .conf{margin-left:auto;font-size:11px;color:var(--muted-2);font-weight:700}
+  .urg{width:44px}
+
+  /* table */
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted-2);font-weight:800;padding:9px 10px;border-bottom:1px solid var(--line)}
+  td{padding:11px 10px;border-bottom:1px solid var(--line);color:var(--muted)}
+  tr:hover td{background:rgba(45,212,191,.03)}
+  td b{color:var(--text)}
+
+  /* people */
+  .person{display:flex;gap:13px;padding:15px;border:1px solid var(--line);border-radius:12px;background:var(--panel);margin-bottom:11px}
+  .pav{width:46px;height:46px;flex:none;border-radius:12px;display:grid;place-items:center;font-weight:800;font-size:16px;color:#04201c;background:linear-gradient(150deg,var(--violet),#7c5cf0)}
+  .person .nm{font-size:13.5px;font-weight:800}.person .tt{font-size:11.5px;color:var(--muted)}
+  .newrole{font-size:9px;font-weight:850;text-transform:uppercase;letter-spacing:.4px;color:var(--good);background:rgba(61,220,151,.13);border:1px solid rgba(61,220,151,.35);padding:2px 7px;border-radius:6px}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:11.5px;margin-top:9px}
+  .kv .k{color:var(--muted-2);font-weight:700}.kv .v{color:var(--muted)}
+  .starter{margin-top:11px;padding:11px 13px;border-radius:10px;background:rgba(167,139,250,.07);border:1px solid rgba(167,139,250,.22);font-size:12px;color:var(--text);font-style:italic}
+  .angles{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .angle{font-size:11px;border:1px solid var(--line-2);border-radius:8px;padding:6px 10px;cursor:pointer;color:var(--muted);background:var(--panel-2)}
+  .angle:hover{color:var(--teal);border-color:var(--teal)}
+
+  /* agents */
+  .fleet{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .agent{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:13px 14px;cursor:pointer;transition:.15s;position:relative}
+  .agent:hover{border-color:var(--glass-brd);transform:translateY(-1px)}
+  .agent.sel{border-color:var(--teal);background:var(--panel-2)}
+  .agent .an{font-size:12.5px;font-weight:750;display:flex;align-items:center;gap:8px}
+  .orb{width:9px;height:9px;border-radius:50%;flex:none}
+  .st-run{background:var(--good);box-shadow:0 0 0 0 rgba(61,220,151,.5);animation:ping 1.6s infinite}
+  .st-idle{background:var(--muted-2)} .st-gate{background:var(--gold);box-shadow:0 0 8px var(--gold)}
+  .agent .role{font-size:10.5px;color:var(--muted-2);margin-top:6px;min-height:26px}
+  .agent .mx{display:flex;gap:10px;margin-top:9px;font-size:10px;color:var(--muted-2)}
+  .agent .mx b{color:var(--text);font-variant-numeric:tabular-nums}
+  .inspector{font-family:var(--mono);font-size:11.5px;color:var(--muted);line-height:1.7}
+  .inspector .ln{padding:2px 0;border-bottom:1px dashed rgba(31,74,67,.5)}
+  .inspector .ln .t{color:var(--teal)} .inspector .ln .w{color:var(--muted-2)}
+  .approve{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid rgba(242,193,78,.3);background:rgba(242,193,78,.06);border-radius:11px;margin-bottom:10px}
+  .approve .tx{font-size:12px}.approve .tx b{color:var(--text)}
+  .btn{font-size:11.5px;font-weight:750;padding:7px 13px;border-radius:9px;cursor:pointer;border:1px solid var(--line-2);background:var(--panel);color:var(--muted);transition:.15s}
+  .btn:hover{color:var(--text);border-color:var(--teal)}
+  .btn.pri{background:var(--teal);color:#04201c;border-color:var(--teal)}
+  .btn.pri:hover{filter:brightness(1.08)}
+  .btn.sm{padding:5px 10px;font-size:11px}
+
+  /* account detail */
+  .tabs{display:flex;gap:5px;flex-wrap:wrap;margin:16px 0}
+  .tab{font-size:12px;font-weight:700;padding:8px 14px;border-radius:9px;cursor:pointer;color:var(--muted);border:1px solid transparent}
+  .tab:hover{color:var(--text)} .tab.on{color:var(--text);background:var(--panel);border-color:var(--glass-brd)}
+  .facts{display:grid;grid-template-columns:1fr 1fr;gap:11px 22px}
+  .fact{border-bottom:1px solid var(--line);padding-bottom:9px}
+  .fact .k{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted-2);font-weight:800}
+  .fact .v{font-size:12.5px;color:var(--text);margin-top:3px}
+  .aisum{padding:14px 16px;border-radius:12px;background:rgba(45,212,191,.05);border:1px solid var(--glass-brd);font-size:13px;line-height:1.65}
+  .ev-item{display:flex;gap:9px;font-size:11.5px;color:var(--muted);padding:7px 0;border-bottom:1px dashed rgba(31,74,67,.55)}
+  .ev-item .src{color:var(--teal);font-weight:700;flex:none}
+  .filterbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .filterbar select,.filterbar input{background:var(--panel);border:1px solid var(--line);border-radius:9px;color:var(--text);font-size:12px;padding:8px 11px;font-family:var(--font)}
+  .filterbar input{min-width:200px}
+
+  /* ROI */
+  .roi{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .roi .field label{font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px}
+  .roi input[type=range]{width:100%;accent-color:var(--teal)}
+  .roi .out{font-size:13px;color:var(--muted)}
+  .roi .big{font-size:30px;font-weight:850;color:var(--teal);font-variant-numeric:tabular-nums}
+
+  @media(max-width:1160px){ .g-kpi{grid-template-columns:repeat(3,1fr)} .g-2,.g-2e,.roi{grid-template-columns:1fr} .fleet{grid-template-columns:repeat(2,1fr)} .g-3{grid-template-columns:1fr} }
+  @media(max-width:820px){
+    .shell{grid-template-columns:1fr} .rail{position:fixed;left:0;top:0;z-index:50;transform:translateX(-110%);transition:.25s;width:230px}
+    .rail.open{transform:none} .menu-btn{display:grid!important}
+    .g-kpi{grid-template-columns:repeat(2,1fr)} .fleet{grid-template-columns:1fr} .facts{grid-template-columns:1fr}
+    .cmdk{display:none} .page{padding:16px}
+  }
+  .menu-btn{display:none;width:34px;height:34px;border-radius:10px;border:1px solid var(--line-2);background:var(--panel);place-items:center;cursor:pointer;font-size:16px}
+  .scrim{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:40;display:none}.scrim.on{display:block}
+</style>
+</head>
+<body>
+<div class="scrim" id="scrim" onclick="toggleRail(false)"></div>
+<div class="shell">
+  <!-- ============ RAIL ============ -->
+  <aside class="rail" id="rail">
+    <div class="brand">
+      <div class="logo" aria-label="LaCleo">
+        <svg viewBox="0 0 46 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="6.5" y="9" width="19" height="19" rx="5" fill="#2dd4bf" fill-opacity=".16" stroke="#2dd4bf" stroke-width="2.7" stroke-linejoin="round"/>
+          <rect x="20.5" y="17" width="19" height="19" rx="5" fill="#0b1a17" stroke="#2dd4bf" stroke-width="2.9" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div><h1>LaCleo Atlas</h1><div class="sub">SMMART · Transformation Radar</div></div>
+    </div>
+    <div class="navlabel">Intelligence</div>
+    <div class="nav on" data-r="exec"><span class="ico">◧</span> Executive</div>
+    <div class="nav" data-r="accounts"><span class="ico">◈</span> Accounts <span class="n" id="n-acc">8</span></div>
+    <div class="nav" data-r="signals"><span class="ico">◉</span> Signals <span class="n" id="n-sig">87</span></div>
+    <div class="nav" data-r="scoring"><span class="ico">▤</span> Scoring</div>
+    <div class="navlabel">Engagement</div>
+    <div class="nav" data-r="people"><span class="ico">◐</span> Decision Makers</div>
+    <div class="nav" data-r="outreach"><span class="ico">✉</span> Outreach</div>
+    <div class="navlabel">Operations</div>
+    <div class="nav" data-r="command"><span class="ico">⬡</span> Command Centre <span class="n" style="background:var(--gold);color:#2a1e04;border-color:var(--gold)">3</span></div>
+    <div class="rail-foot">
+      <b>Illustrative sample data.</b><br>Wire live sources (Sprouts · Apollo · TheirStack ·
+      Clay · gov feeds) to go live across India.
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+    <div class="topbar">
+      <div class="menu-btn" onclick="toggleRail(true)">☰</div>
+      <div class="crumb" id="crumb">Executive Dashboard <small>· state of the market</small></div>
+      <div class="cmdk"><span>⌕</span> Search accounts, people, signals… <kbd>⌘K</kbd></div>
+      <div class="top-right">
+        <span class="chip"><span class="live-dot"></span> 17 agents live</span>
+        <div class="bell">🔔<b>3</b></div>
+      </div>
+    </div>
+
+    <!-- ticker -->
+    <div class="ticker">
+      <div class="tag"><span class="live-dot"></span> Live signals</div>
+      <div class="track" id="ticker"></div>
+    </div>
+
+    <div class="page" id="page"></div>
+  </div>
+</div>
+
+<script>
+/* =========================================================================
+   SMMART TRANSFORMATION RADAR — illustrative sample data
+   All accounts / people / signals are ILLUSTRATIVE for demonstration.
+   ========================================================================= */
+const fmtCr = n => '₹'+n.toLocaleString('en-IN')+' Cr';
+const esc = s => (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+const ACCOUNTS = [
+  { id:'vega', name:'Vega Auto Components', city:'Pune', state:'Maharashtra', ind:'Auto Components',
+    rev:1900, emp:4200, own:'Listed', tier:'p1', overall:88, conf:92, risk:12, prob:88, budget:14,
+    logo:'VA', plants:3, locations:['Chakan (Pune)','Aurangabad','Bhosari (new)'],
+    triggers:['PLI-backed plant ₹450 Cr sanctioned','New COO ex-global OEM (14 days)'],
+    offering:'Lean plant design + TPM + Leadership onboarding',
+    nba:'Brief the new COO within 7 days — first-90-days window is open',
+    summary:'Vega Auto has entered a confirmed transformation journey: a ₹450 Cr PLI-linked greenfield plant at Bhosari was sanctioned, and a COO from a global OEM joined two weeks ago. The concurrence of new capacity, a new operational leader with a 90-day mandate, and export-quality obligations creates a rare double-trigger — a blank-slate operating system SMMART can design from day zero.',
+    scores:{Growth:82,Transformation:91,Expansion:95,Leadership:88,Innovation:70,Hiring:79,Technology:64,Financial:80,Intent:94,Relationship:41},
+    priorities:['Localise PLI supply chain','Ramp Bhosari to volume in 9 months','Meet OEM zero-defect audits'],
+    challenges:['No lean layout on greenfield line','Leadership bench thin for 2nd plant','Quality maturity gap vs OEM'],
+    readiness:'High — budget fresh, sponsor in seat', maturity:'Level 2/5 (defined, not optimised)',
+    tech:['SAP S/4HANA (rollout)','Basic MES','Manual OEE tracking'],
+    awards:['CII Productivity — Regional 2024'],
+    people:['rohan','anil','sunita'],
+    evidence:[
+      {src:'PIB',t:'PLI auto-components tranche — Vega ₹450 Cr sanctioned',d:'2d',trust:1.0},
+      {src:'Exchange',t:'Vega Auto board approves Bhosari greenfield capex',d:'3d',trust:1.0},
+      {src:'LinkedIn',t:'Rohan Deshpande joins Vega Auto as COO',d:'14d',trust:.85},
+      {src:'News',t:'Vega named on Tier-1 OEM export supplier shortlist',d:'21d',trust:.8},
+    ],
+    sigs:[
+      {type:'New greenfield plant (PLI)',tier:'i-vh',conf:94,urg:92,impact:'Greenfield OpEx mandate; unspent budget',reason:'A blank-slate plant must be designed for flow, TPM and quality — ramp-up pain is guaranteed and the OpEx budget is fresh.',pitch:'“Design Bhosari lean from day zero — OEE-ready before ramp.”',off:'TPM + Lean plant design',src:'PIB · Exchange',d:'2d'},
+      {type:'New COO (external, ex-OEM)',tier:'i-vh',conf:90,urg:95,impact:'New leader must show a visible programme in 90 days',reason:'External operational leaders launch a flagship transformation early to justify the mandate; they buy external help to move fast.',pitch:'“Give your first 90 days a signature win — a plant-wide OpEx sprint.”',off:'OpEx programme + Leadership',src:'LinkedIn',d:'14d'},
+      {type:'Global OEM export mandate',tier:'i-h',conf:80,urg:74,impact:'IATF / zero-defect audit deadline',reason:'The OEM imposes quality audits the supplier is not yet ready for — a hard, dated deadline to reach maturity.',pitch:'“Pass the OEM audit first time — Six Sigma zero-defect track.”',off:'Six Sigma + Quality',src:'News',d:'21d'},
+    ]},
+  { id:'meridian', name:'Meridian Chemicals', city:'Vadodara', state:'Gujarat', ind:'Specialty Chemicals',
+    rev:3200, emp:2800, own:'Listed', tier:'p1', overall:84, conf:88, risk:16, prob:83, budget:19,
+    logo:'MC', plants:4, locations:['Dahej','Vadodara','Ankleshwar','Jhagadia (expansion)'],
+    triggers:['Board-approved ₹300 Cr capex','ESG / sustainability programme launched'],
+    offering:'OpEx + Green-Lean + Cost transformation',
+    nba:'Scope a green-lean efficiency diagnostic tied to the ESG mandate',
+    summary:'Meridian approved ₹300 Cr of brownfield capex at Jhagadia and publicly launched an ESG programme with hard energy-intensity targets. Capacity scaling plus a committed efficiency mandate is a classic high-intent window — margin protection at scale is exactly the operational lever SMMART pulls.',
+    scores:{Growth:78,Transformation:80,Expansion:88,Leadership:60,Innovation:66,Hiring:64,Technology:70,Financial:86,Intent:82,Relationship:35},
+    priorities:['Scale Jhagadia without margin loss','Hit energy-intensity ESG targets','De-bottleneck existing lines'],
+    challenges:['Rising input & energy costs','Yield variability across plants','Manual quality documentation'],
+    readiness:'High — capex board-approved', maturity:'Level 3/5',
+    tech:['SAP ECC','SCADA (partial)','LIMS'],awards:['Responsible Care — 2023'],
+    people:['deepa','harish'],
+    evidence:[
+      {src:'Exchange',t:'Meridian board approves ₹300 Cr Jhagadia expansion',d:'4d',trust:1.0},
+      {src:'Company',t:'Meridian ESG report — 30% energy-intensity cut by 2028',d:'12d',trust:.9},
+      {src:'News',t:'Meridian to double specialty capacity',d:'6d',trust:.8},
+    ],
+    sigs:[
+      {type:'Board-approved capex >₹100 Cr',tier:'i-h',conf:86,urg:80,impact:'Capacity coming; scaling risk to margin',reason:'Capacity without OpEx discipline destroys margin — leaders know it, and act pre-emptively.',pitch:'“Scale Jhagadia at target cost — a de-bottlenecking + OEE programme.”',off:'Lean + Productivity',src:'Exchange',d:'4d'},
+      {type:'ESG / sustainability programme',tier:'i-m',conf:76,urg:58,impact:'Energy/material efficiency = operational efficiency',reason:'Hard ESG targets are met through operational efficiency — a natural green-lean entry.',pitch:'“Turn your ESG targets into a green-lean savings engine.”',off:'Green Lean',src:'Company',d:'12d'},
+    ]},
+  { id:'kalyani', name:'Kalyani Precision Forgings', city:'Pune', state:'Maharashtra', ind:'Forgings',
+    rev:2600, emp:5400, own:'Private', tier:'p1', overall:86, conf:90, risk:14, prob:85, budget:16,
+    logo:'KP', plants:3, locations:['Baramati','Chakan','Satara'],
+    triggers:['New COO ex-Bosch joins','Large export order — EU auto Tier-1'],
+    offering:'Six Sigma zero-defect + TPM + Leadership',
+    nba:'Warm intro to COO via ex-client at Bosch alumni network',
+    summary:'Kalyani hired a COO from Bosch and simultaneously won a multi-year EU Tier-1 forging contract. The new leader arrives with a zero-defect playbook and an immediate export-quality deadline — a textbook Very-High double-trigger with a warm relationship path available.',
+    scores:{Growth:80,Transformation:85,Expansion:78,Leadership:90,Innovation:64,Hiring:82,Technology:60,Financial:78,Intent:90,Relationship:66},
+    priorities:['Deliver EU order at zero defects','Standardise across 3 forging lines','Build CI capability internally'],
+    challenges:['Defect escapes on legacy lines','Skilled-operator attrition','Inconsistent TPM adoption'],
+    readiness:'Very High', maturity:'Level 3/5',
+    tech:['SAP S/4HANA','MES (line 1 only)','SPC pilot'],awards:['ACMA Gold — Manufacturing Excellence 2023'],
+    people:['vikas'],
+    evidence:[
+      {src:'LinkedIn',t:'Vikas Rao joins Kalyani Precision as COO (ex-Bosch)',d:'6d',trust:.85},
+      {src:'News',t:'Kalyani wins multi-year EU Tier-1 forging supply deal',d:'18d',trust:.85},
+      {src:'Careers',t:'Kalyani posts CI Manager & Black Belt roles',d:'9d',trust:.8},
+    ],
+    sigs:[
+      {type:'New COO (external, ex-OEM)',tier:'i-vh',conf:90,urg:93,impact:'90-day mandate to standardise & de-risk exports',reason:'A Bosch-trained COO will demand zero-defect discipline immediately and buy help to install it fast.',pitch:'“Install your zero-defect operating system across all 3 lines in 90 days.”',off:'Six Sigma + TPM',src:'LinkedIn',d:'6d'},
+      {type:'Global OEM / export win',tier:'i-vh',conf:84,urg:88,impact:'Hard EU quality & delivery deadline',reason:'An EU Tier-1 contract imposes audit and defect standards on a hard timeline.',pitch:'“Protect the EU contract — first-time-right quality track.”',off:'Quality + Six Sigma',src:'News',d:'18d'},
+      {type:'Six Sigma / CI hiring',tier:'i-h',conf:80,urg:70,impact:'Active internal CI programme forming',reason:'Building a CI team signals a funded programme that needs external trainers & certification.',pitch:'“Certify your new CI team — Black Belt cohort + live projects.”',off:'Six Sigma training',src:'Careers',d:'9d'},
+    ]},
+  { id:'sunrise', name:'Sunrise Pharma', city:'Hyderabad', state:'Telangana', ind:'Pharmaceuticals',
+    rev:1400, emp:3100, own:'Listed', tier:'p2', overall:78, conf:82, risk:20, prob:74, budget:11,
+    logo:'SP', plants:2, locations:['Hyderabad','Vizag'],
+    triggers:['4× Six Sigma Black Belt openings','USFDA re-inspection prep'],
+    offering:'Six Sigma + Operational Excellence + Quality',
+    nba:'Send an executive brief on data-integrity + OpEx to the Quality Head',
+    summary:'Sunrise Pharma posted four Six Sigma Black Belt roles while preparing for a USFDA re-inspection. The quality-and-compliance pressure combined with an internal CI build-out is a strong, if slightly less capital-driven, high-intent window centred on the Quality function.',
+    scores:{Growth:66,Transformation:76,Expansion:58,Leadership:62,Innovation:60,Hiring:80,Technology:66,Financial:70,Intent:78,Relationship:30},
+    priorities:['Clear USFDA observations','Build internal Six Sigma bench','Reduce batch-failure rate'],
+    challenges:['Data-integrity gaps','Batch variability','Documentation burden'],
+    readiness:'Medium-High', maturity:'Level 3/5',
+    tech:['SAP','LIMS','MES (partial)'],awards:[],
+    people:[],
+    evidence:[
+      {src:'Careers',t:'Sunrise posts 4 Six Sigma Black Belt roles',d:'1d',trust:.8},
+      {src:'News',t:'Sunrise Pharma preps for USFDA re-inspection',d:'15d',trust:.75},
+    ],
+    sigs:[
+      {type:'Six Sigma / CI hiring (4 roles)',tier:'i-h',conf:80,urg:76,impact:'Funded CI programme scaling',reason:'Four Black Belt roles at once is a committed, funded operational-excellence programme.',pitch:'“Accelerate your Black Belt bench with live batch-yield projects.”',off:'Six Sigma + OpEx',src:'Careers',d:'1d'},
+      {type:'Quality / compliance mandate',tier:'i-m',conf:72,urg:64,impact:'USFDA deadline forces process discipline',reason:'Regulatory re-inspection forces documented, capable processes — consultants accelerate readiness.',pitch:'“Turn USFDA prep into a lasting quality operating system.”',off:'Quality systems',src:'News',d:'15d'},
+    ]},
+  { id:'orient', name:'Orient Textiles Mills', city:'Coimbatore', state:'Tamil Nadu', ind:'Textiles',
+    rev:900, emp:2200, own:'Private', tier:'p2', overall:74, conf:79, risk:18, prob:70, budget:8,
+    logo:'OT', plants:2, locations:['Coimbatore','Tirupur'],
+    triggers:['PLI textile scheme approved','Capacity expansion announced'],
+    offering:'Lean + Productivity + TPM',
+    nba:'Position a productivity diagnostic tied to PLI output targets',
+    summary:'Orient secured PLI textile approval and announced a capacity expansion. PLI output commitments under margin pressure make productivity and lean flow immediately relevant, though the buying committee is still forming.',
+    scores:{Growth:74,Transformation:70,Expansion:82,Leadership:54,Innovation:56,Hiring:60,Technology:52,Financial:68,Intent:78,Relationship:28},
+    priorities:['Meet PLI output targets','Improve loom productivity','Reduce conversion cost'],
+    challenges:['Low OEE on legacy looms','Labour productivity','Energy cost'],
+    readiness:'Medium', maturity:'Level 2/5',
+    tech:['Tally/ERP','Manual production tracking'],awards:[],people:[],
+    evidence:[
+      {src:'PIB',t:'Orient approved under PLI textile scheme',d:'8d',trust:1.0},
+      {src:'News',t:'Orient Textiles to expand Tirupur capacity',d:'11d',trust:.78},
+    ],
+    sigs:[
+      {type:'PLI scheme approval',tier:'i-vh',conf:88,urg:78,impact:'Mandated output scale-up under margin pressure',reason:'PLI winners must hit aggressive volume targets while protecting margin — productivity consulting is near-mandatory.',pitch:'“Hit your PLI output at target cost — a loom-productivity + lean sprint.”',off:'Productivity + Lean',src:'PIB',d:'8d'},
+      {type:'Capacity expansion',tier:'i-h',conf:78,urg:66,impact:'New capacity strains existing flow',reason:'Same-site scale-up strains lines → OEE, bottleneck and TPM work.',pitch:'“Add capacity without adding waste — TPM + OEE programme.”',off:'TPM + OEE',src:'News',d:'11d'},
+    ]},
+  { id:'nova', name:'Nova Foods & Beverages', city:'Ahmedabad', state:'Gujarat', ind:'Food & FMCG',
+    rev:1100, emp:1900, own:'Private', tier:'p2', overall:71, conf:80, risk:15, prob:68, budget:9,
+    logo:'NF', plants:2, locations:['Ahmedabad','Sanand (new)'],
+    triggers:['New plant at Sanand','New CHRO — capability building'],
+    offering:'Leadership Development + Corporate Training + Lean',
+    nba:'Introduce SMMART leadership academy to the new CHRO',
+    summary:'Nova is commissioning a new Sanand plant and hired a CHRO with a capability-building brief. This is a dual operational-and-leadership window: the new plant needs lean commissioning while the CHRO owns exactly the corporate-training budget SMMART’s leadership arm targets.',
+    scores:{Growth:72,Transformation:66,Expansion:80,Leadership:74,Innovation:58,Hiring:70,Technology:50,Financial:66,Intent:72,Relationship:33},
+    priorities:['Commission Sanand smoothly','Build a leadership pipeline','Standardise food-safety quality'],
+    challenges:['New-plant ramp risk','Thin middle-management bench','FSSAI/quality consistency'],
+    readiness:'Medium', maturity:'Level 2/5',
+    tech:['SAP Business One','Basic WMS'],awards:[],people:[],
+    evidence:[
+      {src:'News',t:'Nova Foods commissions new Sanand facility',d:'10d',trust:.78},
+      {src:'LinkedIn',t:'Nova appoints CHRO with capability-building mandate',d:'7d',trust:.82},
+    ],
+    sigs:[
+      {type:'New plant commissioning',tier:'i-h',conf:78,urg:70,impact:'Ramp + food-safety quality design',reason:'A new food plant needs lean commissioning and quality-by-design from day one.',pitch:'“Commission Sanand lean & food-safe — a ramp-readiness programme.”',off:'Lean + Quality',src:'News',d:'10d'},
+      {type:'New CHRO / capability head',tier:'i-m',conf:74,urg:62,impact:'Owns the corporate-training budget',reason:'A CHRO with a capability mandate controls the leadership-development spend SMMART targets.',pitch:'“Build your leadership pipeline — a Nova leadership academy.”',off:'Leadership dev + Training',src:'LinkedIn',d:'7d'},
+    ]},
+  { id:'sterling', name:'Sterling Auto Forge', city:'Chennai', state:'Tamil Nadu', ind:'Auto Components',
+    rev:700, emp:1500, own:'Private', tier:'p3', overall:58, conf:70, risk:22, prob:52, budget:5,
+    logo:'SF', plants:1, locations:['Sriperumbudur'],
+    triggers:['PLI application pending (expected)'],
+    offering:'Watch — pre-position for OpEx on trigger',
+    nba:'Set an alert; pre-position on PLI decision',
+    summary:'Sterling fits the SMMART ICP (Chennai auto-components, right size) but has no live trigger yet. It has a pending PLI application; Atlas classifies it as a Future Opportunity and will alert the moment a trigger lands.',
+    scores:{Growth:62,Transformation:52,Expansion:58,Leadership:48,Innovation:50,Hiring:46,Technology:48,Financial:60,Intent:44,Relationship:24},
+    priorities:['Win PLI approval','Grow OEM wallet share'],
+    challenges:['Single-plant concentration','Limited CI capability'],
+    readiness:'Low (no trigger yet)', maturity:'Level 2/5',
+    tech:['Tally','Manual tracking'],awards:[],people:[],
+    evidence:[{src:'News',t:'Sterling Auto among PLI auto applicants',d:'26d',trust:.7}],
+    sigs:[{type:'PLI application pending',tier:'i-l',conf:60,urg:40,impact:'Trigger expected, not yet fired',reason:'Strong firmographic fit; a PLI approval would immediately open a Very-High window.',pitch:'“Be ready to move the day PLI lands.”',off:'Pre-position',src:'News',d:'26d'}]},
+  { id:'apex', name:'Apex Engineering', city:'Rajkot', state:'Gujarat', ind:'Machinery',
+    rev:450, emp:1100, own:'Private', tier:'p3', overall:54, conf:68, risk:20, prob:48, budget:4,
+    logo:'AE', plants:1, locations:['Rajkot'],
+    triggers:['ISO 9001 renewal drive'],
+    offering:'Quality systems + Lean (medium)',
+    nba:'Quarterly nurture; watch for capex or leadership change',
+    summary:'Apex is a fit-but-quiet account: an ISO renewal drive signals process interest but no capital or leadership trigger. Medium priority — nurture and re-scan.',
+    scores:{Growth:56,Transformation:60,Expansion:48,Leadership:44,Innovation:52,Hiring:50,Technology:46,Financial:58,Intent:56,Relationship:22},
+    priorities:['Renew ISO 9001','Improve on-time delivery'],
+    challenges:['Delivery reliability','Documentation'],
+    readiness:'Low-Medium', maturity:'Level 2/5',
+    tech:['ERP (local)','Manual QA'],awards:[],people:[],
+    evidence:[{src:'Company',t:'Apex begins ISO 9001 renewal',d:'20d',trust:.7}],
+    sigs:[{type:'ISO / certification drive',tier:'i-m',conf:70,urg:50,impact:'Process-discipline moment',reason:'Certification forces documented process discipline; consultants accelerate audit-readiness.',pitch:'“Make ISO renewal a real quality upgrade, not paperwork.”',off:'Quality systems',src:'Company',d:'20d'}]},
+];
+
+const PEOPLE = {
+  rohan:{name:'Rohan Deshpande',role:'Chief Operating Officer',org:'Vega Auto Components',newRole:true,av:'RD',color:'linear-gradient(150deg,#a78bfa,#7c5cf0)',
+    kv:{'Tenure':'14 days (ex-global OEM)','Education':'B.Tech Mech · IIT-B; PGP · ISB','Career':'20y ops — OEM plant leadership, lean transformation'},
+    kpis:['Bhosari on-time ramp','OEE & first-pass yield','PLI localisation %','Export-audit pass rate'],
+    pain:['Blank-slate greenfield with a hard ramp deadline','Thin leadership bench for the 2nd plant','Proving impact inside 90 days'],
+    comm:'Direct, data-first; responds to peer OEM benchmarks and speed-to-impact.',
+    behav:'Early-tenure buyer — high propensity to engage a partner for a signature first-90-days win.',
+    strength:'Cold — but 2nd-degree warm path via an ex-Vega client in the OEM alumni network.',
+    starter:'“Congratulations on the Vega COO role, Rohan. Most greenfield PLI plants lose 6–9 months of margin to ramp waste that was designable-out on day zero. Worth 20 minutes on how we help new COOs bank an early OEE win?”',
+    email:'First-90-days OpEx sprint tied to Bhosari ramp', call:'Peer-OEM benchmark on greenfield ramp waste', meeting:'Bhosari lean-design workshop proposal'},
+  anil:{name:'Anil Kulkarni',role:'Managing Director',org:'Vega Auto Components',newRole:false,av:'AK',color:'linear-gradient(150deg,#2dd4bf,#0d9488)',
+    kv:{'Tenure':'11 years','Education':'BE · COEP; OPM · Harvard','Career':'Promoter-professional; scaled Vega 4×'},
+    kpis:['PLI revenue realisation','Group EBITDA','Export share of revenue'],
+    pain:['Executing PLI commitments on time','Building an institutional operating system','Margin at scale'],
+    comm:'Strategic, legacy-minded; responds to transformation vision + proof.',
+    behav:'Sponsor/economic buyer — approves budget once the COO champions.',
+    strength:'Cold; approach after COO is engaged.',
+    starter:'“Anil, Vega’s PLI plant is a once-in-a-decade chance to hard-wire an operating system that scales. We’d value sharing how peers turned PLI capacity into durable margin.”',
+    email:'PLI capacity → durable margin operating system', call:'Board-level transformation vision', meeting:'Executive transformation roadmap session'},
+  sunita:{name:'Sunita Rao',role:'Head of Quality',org:'Vega Auto Components',newRole:false,av:'SR',color:'linear-gradient(150deg,#f2a24e,#d97706)',
+    kv:{'Tenure':'6 years','Education':'M.Tech · Quality Engineering','Career':'Quality & SPC across auto components'},
+    kpis:['PPM / defect escapes','OEM audit pass rate','IATF compliance'],
+    pain:['Meeting OEM zero-defect standards on a new line','SPC maturity','Audit readiness'],
+    comm:'Detail-oriented; responds to method rigour and audit outcomes.',
+    behav:'Technical champion — validates approach, influences COO.',
+    strength:'Cold; strong technical-champion potential.',
+    starter:'“Sunita, the OEM export audit is the near-term hurdle for the new line. We help quality heads reach first-time-right before the auditor arrives — happy to share the playbook.”',
+    email:'First-time-right before the OEM audit', call:'SPC & zero-defect method walkthrough', meeting:'Audit-readiness gap assessment'},
+  deepa:{name:'Deepa Nair',role:'Chief Financial Officer',org:'Meridian Chemicals',newRole:false,av:'DN',color:'linear-gradient(150deg,#2dd4bf,#0d9488)',
+    kv:{'Tenure':'5 years','Education':'CA; MBA-Finance','Career':'Finance leadership in chemicals'},
+    kpis:['EBITDA margin at scale','Capex ROI (Jhagadia)','Energy cost / tonne'],
+    pain:['Protecting margin through expansion','ESG-target cost','Yield variability'],
+    comm:'ROI-driven; responds to quantified savings and payback.',
+    behav:'Economic buyer — funds programmes with clear payback.',
+    strength:'Cold.',
+    starter:'“Deepa, Meridian’s ₹300 Cr expansion and ESG targets both come down to cost-per-tonne. We help CFOs turn efficiency into a funded, tracked savings line — worth a short ROI conversation?”',
+    email:'Expansion + ESG → tracked cost-per-tonne savings', call:'Payback model on green-lean', meeting:'Efficiency savings diagnostic'},
+  harish:{name:'Harish Patel',role:'VP Operations',org:'Meridian Chemicals',newRole:false,av:'HP',color:'linear-gradient(150deg,#a78bfa,#7c5cf0)',
+    kv:{'Tenure':'8 years','Education':'B.Tech Chemical','Career':'Plant & operations leadership'},
+    kpis:['OEE across 4 plants','Jhagadia ramp','Yield & de-bottlenecking'],
+    pain:['Yield variability','Scaling without margin loss','Manual quality docs'],
+    comm:'Operational, pragmatic; responds to shop-floor proof.',
+    behav:'Technical champion / user buyer.',
+    strength:'Cold.',
+    starter:'“Harish, de-bottlenecking your existing lines could fund a chunk of Jhagadia. We’ve helped chemical VPs unlock 8–12% OEE without capex — open to comparing notes?”',
+    email:'Unlock OEE to self-fund expansion', call:'De-bottlenecking quick wins', meeting:'OEE + yield shop-floor assessment'},
+  vikas:{name:'Vikas Rao',role:'Chief Operating Officer',org:'Kalyani Precision Forgings',newRole:true,av:'VR',color:'linear-gradient(150deg,#a78bfa,#7c5cf0)',
+    kv:{'Tenure':'6 days (ex-Bosch)','Education':'BE · Production; Six Sigma MBB','Career':'18y — Bosch production system, zero-defect'},
+    kpis:['EU-order defect PPM','Cross-line standardisation','CI programme maturity'],
+    pain:['Defect escapes on legacy lines','Standardising 3 sites','Delivering EU order flawlessly'],
+    comm:'Systematic, TPS-minded; responds to structured operating-system thinking.',
+    behav:'Early-tenure buyer with a proven playbook — very high propensity to bring in a partner to scale it fast.',
+    strength:'Warm — SMMART worked with a Bosch alumni contact who can introduce.',
+    starter:'“Vikas, welcome to Kalyani. Rolling the Bosch zero-defect system across 3 forging lines before the EU order ramps is the classic first-90-days test. We help COOs install it fast — and an ex-Bosch colleague suggested we connect.”',
+    email:'Scale your zero-defect system across 3 lines', call:'Bosch-alumni warm intro + operating-system fit', meeting:'90-day standardisation roadmap'},
+};
+
+const AGENTS = [
+  {n:'Supervisor',st:'st-run',role:'Plans the run, routes work, decides “enough evidence?”',conf:.91,q:0,rt:0,f:0,mem:'run plan v3 · budget 1.2M tok'},
+  {n:'Research',st:'st-run',role:'Firmographics, plants, revenue, structure',conf:.88,q:2,rt:0,f:0,mem:'last 50 registry + web pulls'},
+  {n:'News',st:'st-run',role:'Press, expansions, capex, awards, M&A',conf:.84,q:3,rt:1,f:0,mem:'312 items → 6 candidate signals'},
+  {n:'Hiring',st:'st-run',role:'OpEx / Lean / Six-Sigma / plant-head roles',conf:.83,q:6,rt:1,f:0,mem:'job-board deltas · 14 orgs'},
+  {n:'Funding',st:'st-idle',role:'PE, growth capital, JV, listings',conf:.79,q:0,rt:0,f:0,mem:'idle · next run 00:41'},
+  {n:'Leadership',st:'st-run',role:'CXO / plant-head / new-role changes',conf:.90,q:4,rt:0,f:0,mem:'2 COO hires detected today'},
+  {n:'Intent',st:'st-run',role:'Fuses signals into intent freshness/strength',conf:.87,q:1,rt:0,f:0,mem:'decay curves · 340 accounts'},
+  {n:'Website',st:'st-run',role:'Site diffs, new-plant/product pages, tech',conf:.76,q:5,rt:2,f:1,mem:'diffed 88 sites · 3 new plant pages'},
+  {n:'LinkedIn',st:'st-run',role:'Exec posts, headcount trend, role changes',conf:.81,q:3,rt:1,f:0,mem:'headcount ▲ signals · 22 orgs'},
+  {n:'Google',st:'st-run',role:'Long-tail discovery, PIB/gov, tenders',conf:.80,q:2,rt:0,f:0,mem:'PIB PLI list parsed'},
+  {n:'Procurement',st:'st-run',role:'Tenders, PLI lists, gov MOUs, incentives',conf:.82,q:1,rt:0,f:0,mem:'PLI tranche · 2 SMMART fits'},
+  {n:'News Summariser',st:'st-run',role:'De-dupes raw items into candidate signals',conf:.86,q:0,rt:0,f:0,mem:'collapsed 312→41 unique'},
+  {n:'Evidence Validator',st:'st-run',role:'Confirms real/dated/primary; kills hallucinations',conf:.93,q:2,rt:0,f:0,mem:'verified 38 · dismissed 3'},
+  {n:'Lead Scoring',st:'st-run',role:'Runs the score stack, classifies P1–P3',conf:.89,q:0,rt:0,f:0,mem:'model v2.3 · 12 P1 today'},
+  {n:'Relationship',st:'st-idle',role:'Maps alumni / ex-client warm paths',conf:.77,q:0,rt:0,f:0,mem:'2 warm paths found (Kalyani)'},
+  {n:'Email / Outreach',st:'st-run',role:'Drafts briefs, emails, LinkedIn, call scripts',conf:.85,q:3,rt:0,f:0,mem:'4 drafts pending approval'},
+  {n:'Human Approval',st:'st-gate',role:'Holds external actions for human sign-off',conf:1,q:3,rt:0,f:0,mem:'⏸ 3 items in queue'},
+];
+
+const IND_DIST=[['Auto Components',34,'#2dd4bf'],['Specialty Chemicals',19,'#a78bfa'],['Pharma',14,'#f2a24e'],['Textiles',11,'#f2c14e'],['Food & FMCG',12,'#3ddc97'],['Machinery',10,'#5f9e93']];
+const CITY_DIST=[['Pune',22,'#2dd4bf'],['Ahmedabad',16,'#a78bfa'],['Chennai',14,'#f2a24e'],['Hyderabad',13,'#f2c14e'],['Vadodara',12,'#3ddc97'],['Coimbatore',11,'#5f9e93'],['Others',12,'#5f827b']];
+const TREND=[41,48,44,59,63,72,68,81,87];
+const FORECAST=[[ 'Q1',120],['Q2',185],['Q3',240],['Q4',310]];
+
+/* ---------- small chart helpers ---------- */
+function spark(data,w=120,h=30,color='#2dd4bf'){
+  const mx=Math.max(...data),mn=Math.min(...data),rg=(mx-mn)||1;
+  const pts=data.map((v,i)=>`${i/(data.length-1)*w},${h-((v-mn)/rg)*h}`).join(' ');
+  return `<svg class="chart" width="${w}" height="${h}"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round"/></svg>`;
+}
+function bars(data,w=240,h=90){
+  const mx=Math.max(...data.map(d=>d[1]));const bw=w/data.length;
+  return `<svg class="chart" width="${w}" height="${h+18}">`+data.map((d,i)=>{
+    const bh=d[1]/mx*h;return `<rect x="${i*bw+6}" y="${h-bh}" width="${bw-14}" height="${bh}" rx="4" fill="url(#tg)"/>
+    <text x="${i*bw+bw/2}" y="${h+13}" fill="#5f827b" font-size="10" text-anchor="middle">${d[0]}</text>`;}).join('')
+    +`<defs><linearGradient id="tg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2dd4bf"/><stop offset="1" stop-color="#0d9488"/></linearGradient></defs></svg>`;
+}
+function donut(data,size=140){
+  const r=size/2-8,c=2*Math.PI*r;let off=0;const cx=size/2;
+  const segs=data.map(d=>{const frac=d[1]/100;const seg=`<circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="${d[2]}" stroke-width="14" stroke-dasharray="${frac*c} ${c}" stroke-dashoffset="${-off*c}" transform="rotate(-90 ${cx} ${cx})"/>`;off+=frac;return seg;}).join('');
+  return `<svg class="chart" width="${size}" height="${size}">${segs}<text x="${cx}" y="${cx-2}" text-anchor="middle" fill="#e7f5f1" font-size="20" font-weight="800">340</text><text x="${cx}" y="${cx+15}" text-anchor="middle" fill="#5f827b" font-size="10">accounts</text></svg>`;
+}
+function radar(scores,size=220){
+  const keys=Object.keys(scores);const n=keys.length;const cx=size/2,cy=size/2,R=size/2-30;
+  const pt=(i,v)=>{const a=(Math.PI*2*i/n)-Math.PI/2;return[cx+Math.cos(a)*R*v/100,cy+Math.sin(a)*R*v/100];};
+  let rings='';[25,50,75,100].forEach(rr=>{const p=keys.map((_,i)=>{const a=(Math.PI*2*i/n)-Math.PI/2;return `${cx+Math.cos(a)*R*rr/100},${cy+Math.sin(a)*R*rr/100}`;}).join(' ');rings+=`<polygon points="${p}" fill="none" stroke="#173631" stroke-width="1"/>`;});
+  const poly=keys.map((k,i)=>pt(i,scores[k]).join(',')).join(' ');
+  const labels=keys.map((k,i)=>{const a=(Math.PI*2*i/n)-Math.PI/2;const x=cx+Math.cos(a)*(R+18),y=cy+Math.sin(a)*(R+18);return `<text x="${x}" y="${y}" fill="#8db3ab" font-size="9" text-anchor="middle" dominant-baseline="middle">${k.slice(0,5)}</text>`;}).join('');
+  return `<svg class="chart" width="${size}" height="${size}">${rings}<polygon points="${poly}" fill="rgba(45,212,191,.18)" stroke="#2dd4bf" stroke-width="2"/>${keys.map((k,i)=>{const[x,y]=pt(i,scores[k]);return `<circle cx="${x}" cy="${y}" r="2.5" fill="#2dd4bf"/>`;}).join('')}${labels}</svg>`;
+}
+function meterRow(label,val){return `<div class="meter"><div class="lab"><span>${label}</span><b>${val}</b></div><div class="bar"><i data-w="${val}"></i></div></div>`;}
+function animateBars(){requestAnimationFrame(()=>document.querySelectorAll('.bar i[data-w]').forEach(i=>i.style.width=Math.min(100,+i.dataset.w)+'%'));}
+
+/* =========================== ROUTER =========================== */
+const CRUMBS={exec:['Executive Dashboard','state of the market'],accounts:['Accounts','watchlist under intelligence'],signals:['Signal Intelligence','live transformation triggers'],scoring:['AI Prospect Scoring','the capability-gap model'],people:['Decision-Maker Intelligence','who to reach, and how'],outreach:['AI Outreach Centre','evidence-grounded engagement'],command:['AI Command Centre','the agent fleet']};
+let CUR='exec';
+function go(r){CUR=r;document.querySelectorAll('.nav').forEach(n=>n.classList.toggle('on',n.dataset.r===r));
+  const c=CRUMBS[r]||CRUMBS.exec;document.getElementById('crumb').innerHTML=`${c[0]} <small>· ${c[1]}</small>`;
+  RENDER[r]();animateBars();window.scrollTo(0,0);toggleRail(false);}
+document.querySelectorAll('.nav').forEach(n=>n.onclick=()=>go(n.dataset.r));
+function toggleRail(open){document.getElementById('rail').classList.toggle('open',open);document.getElementById('scrim').classList.toggle('on',open);}
+
+const P=()=>document.getElementById('page');
+const RENDER={};
+
+/* --------- Module 1: Executive --------- */
+RENDER.exec=()=>{
+  const hi=ACCOUNTS.filter(a=>a.tier==='p1'||a.tier==='p2').sort((a,b)=>b.overall-a.overall);
+  const agg={Transformation:84,Expansion:79,Innovation:62,'Leadership Δ':81,Hiring:73,News:88,Procurement:76};
+  P().innerHTML=`
+  <div class="panel hero">
+    <h2>Who in India just entered a <span class="accent">transformation journey</span> — this week?</h2>
+    <p>Atlas watches 340 companies for consulting-specific triggers — new plants, PLI wins, COO hires, export mandates — and scores the <b>capability gap</b>, not the company. 12 accounts are high-intent right now.</p>
+    <div class="row">
+      <span class="pill"><span class="live-dot"></span> 87 signals this week</span>
+      <span class="pill">▲ 4 new P1 vs last week</span>
+      <span class="pill">AI confidence 89%</span>
+      <span class="pill">Est. revenue opportunity ₹86 Cr under watch</span>
+    </div>
+  </div>
+
+  <div class="grid g-kpi" style="margin-bottom:16px">
+    ${kpi('Revenue Opportunity','₹86<small> Cr</small>','+₹12 Cr wk','up',TREND,true)}
+    ${kpi('Companies Under Watch','340','+18 wk','up',[300,310,315,322,330,336,340])}
+    ${kpi('High-Intent Accounts','12','+4 wk','up',[6,7,7,9,10,11,12])}
+    ${kpi('Buying Signals /wk','87','+15 wk','up',TREND)}
+    ${kpi('AI Confidence','89<small>%</small>','+2 pts','up',[84,85,86,86,88,89])}
+    ${kpi('Pipeline Forecast','₹310<small> Cr</small>','Q4 weighted','',[120,185,240,310],true)}
+  </div>
+
+  <div class="grid g-2" style="margin-bottom:16px">
+    <div class="panel pad">
+      <div class="sh"><h3>Pipeline forecast — weighted by P-tier × probability</h3><span class="meta">₹ Cr · 4 quarters</span></div>
+      ${bars(FORECAST,520,120)}
+      <div class="sh" style="margin-top:18px"><h3>Transformation sub-scores — market aggregate</h3><span class="meta">0–100</span></div>
+      ${Object.entries(agg).map(([k,v])=>meterRow(k,v)).join('')}
+    </div>
+    <div class="panel pad">
+      <div class="sh"><h3>High-intent accounts</h3><span class="meta">this week</span></div>
+      ${hi.map(a=>accountRow(a)).join('')}
+    </div>
+  </div>
+
+  <div class="grid g-3" style="margin-bottom:16px">
+    <div class="panel pad"><div class="sh"><h3>Industry distribution</h3></div>
+      <div style="display:flex;gap:16px;align-items:center">${donut(IND_DIST)}
+      <div class="legend">${IND_DIST.map(d=>`<div class="li"><span class="sw" style="background:${d[2]}"></span>${d[0]}<b>${d[1]}%</b></div>`).join('')}</div></div></div>
+    <div class="panel pad"><div class="sh"><h3>City distribution</h3></div>
+      <div class="legend">${CITY_DIST.map(d=>`<div class="li"><span class="sw" style="background:${d[2]}"></span>${d[0]}<b>${d[1]}%</b></div><div class="bar" style="margin-bottom:2px"><i data-w="${d[1]*3.5}" style="background:${d[2]}"></i></div>`).join('')}</div></div>
+    <div class="panel pad"><div class="sh"><h3>Weekly signal trend</h3><span class="meta">9 weeks</span></div>
+      <div style="font-size:30px;font-weight:850;color:var(--teal)">87<span style="font-size:13px;color:var(--muted)"> /wk</span></div>
+      <div style="margin:10px 0">${spark(TREND,300,60)}</div>
+      <div class="meta">Very-High 14 · High 31 · Medium 28 · Low 14</div></div>
+  </div>
+
+  <div class="panel pad">
+    <div class="sh"><h3>⚡ AI recommendations — ranked next actions</h3><span class="meta">generated by the Supervisor agent</span></div>
+    ${rec(1,'Call Vega Auto’s new COO within 7 days','Double-trigger (PLI plant + COO hire) — the first-90-days window is open and closing.','vega')}
+    ${rec(2,'Use the Bosch warm path into Kalyani','A warm intro to the new COO exists via an ex-client — highest-conversion route this week.','kalyani')}
+    ${rec(3,'Send Meridian CFO a green-lean ROI brief','₹300 Cr capex + ESG targets both reduce to cost-per-tonne — lead with payback.','meridian')}
+    ${rec(4,'Pitch Sunrise Pharma’s Quality Head','4 Black Belt roles + USFDA prep — a funded CI programme needs a certification partner.','sunrise')}
+  </div>`;
+};
+function kpi(k,v,d,dir,sp,accent){return `<div class="panel kpi ${accent?'accent':''}"><div class="k">${k}</div><div class="v">${v}</div>${d?`<div class="d ${dir}">${dir==='up'?'▲':dir==='down'?'▼':'•'} ${d}</div>`:''}<div class="spark">${spark(sp,74,22,accent?'#2dd4bf':'#5f9e93')}</div></div>`;}
+function accountRow(a){return `<div class="arow" onclick="openAccount('${a.id}')">
+  <div class="alogo">${a.logo}</div>
+  <div style="min-width:0"><div class="nm">${esc(a.name)}</div><div class="mt">${a.city} · ${a.ind} · ${fmtCr(a.rev)}</div>
+  <div class="trig">▸ ${esc(a.triggers[0])}</div></div>
+  <div class="rt"><span class="ptier ${a.tier}">${a.tier.toUpperCase()}</span><div class="score">${a.overall}<small>/100</small></div><div class="mt">${a.conf}% conf</div></div></div>`;}
+function rec(n,t,why,id){return `<div class="rec"><div class="num">${n}</div><div class="tx"><b>${esc(t)}</b><div class="why">${esc(why)}</div></div><div class="go" onclick="openAccount('${id}')">Open →</div></div>`;}
+
+/* --------- Module 2: Accounts + 360 --------- */
+RENDER.accounts=()=>{
+  P().innerHTML=`
+  <div class="filterbar">
+    <input id="fq" placeholder="Search accounts…" oninput="renderAccList()">
+    <select id="ft" onchange="renderAccList()"><option value="">All tiers</option><option>P1</option><option>P2</option><option>P3</option></select>
+    <select id="fi" onchange="renderAccList()"><option value="">All industries</option>${[...new Set(ACCOUNTS.map(a=>a.ind))].map(i=>`<option>${i}</option>`).join('')}</select>
+    <select id="fs" onchange="renderAccList()"><option value="overall">Sort: Buying score</option><option value="prob">Sort: Probability</option><option value="rev">Sort: Revenue</option></select>
+    <span class="meta" style="margin-left:auto" id="acccount"></span>
+  </div>
+  <div class="panel pad"><table><thead><tr><th>Company</th><th>Industry</th><th>City</th><th>Top trigger</th><th>P-tier</th><th>Score</th><th>Prob.</th><th>Est. budget</th></tr></thead><tbody id="acctbody"></tbody></table></div>`;
+  renderAccList();
+};
+function renderAccList(){
+  const q=(document.getElementById('fq')?.value||'').toLowerCase();
+  const t=document.getElementById('ft')?.value||'';const ind=document.getElementById('fi')?.value||'';const sort=document.getElementById('fs')?.value||'overall';
+  let rows=ACCOUNTS.filter(a=>(!q||a.name.toLowerCase().includes(q))&&(!t||a.tier===t.toLowerCase())&&(!ind||a.ind===ind)).sort((a,b)=>b[sort]-a[sort]);
+  document.getElementById('acctbody').innerHTML=rows.map(a=>`<tr style="cursor:pointer" onclick="openAccount('${a.id}')">
+    <td><b>${esc(a.name)}</b></td><td>${a.ind}</td><td>${a.city}</td><td>${esc(a.triggers[0])}</td>
+    <td><span class="ptier ${a.tier}">${a.tier.toUpperCase()}</span></td><td><b>${a.overall}</b></td><td>${a.prob}%</td><td>${fmtCr(a.budget)}</td></tr>`).join('');
+  document.getElementById('acccount').textContent=rows.length+' accounts';
+}
+let ACC_TAB='overview';
+function openAccount(id){const a=ACCOUNTS.find(x=>x.id===id);if(!a)return;CUR='accounts';ACC_TAB='overview';
+  document.querySelectorAll('.nav').forEach(n=>n.classList.toggle('on',n.dataset.r==='accounts'));
+  document.getElementById('crumb').innerHTML=`Accounts <small>· ${esc(a.name)}</small>`;
+  renderAccount(a);animateBars();window.scrollTo(0,0);}
+function renderAccount(a){
+  const tabs=['overview','signals','people','financials','tech','outreach'];
+  P().innerHTML=`
+  <div class="panel pad" style="margin-bottom:14px">
+    <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
+      <div class="alogo" style="width:52px;height:52px;font-size:20px">${a.logo}</div>
+      <div style="min-width:0">
+        <div style="font-size:19px;font-weight:850">${esc(a.name)}</div>
+        <div class="mt" style="font-size:12px;color:var(--muted)">${a.city}, ${a.state} · ${a.ind} · ${fmtCr(a.rev)} · ${a.emp.toLocaleString('en-IN')} employees · ${a.own}</div>
+        <div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap">${a.triggers.map(t=>`<span class="pill">▸ ${esc(t)}</span>`).join('')}</div>
+      </div>
+      <div style="margin-left:auto;text-align:right">
+        <span class="ptier ${a.tier}" style="font-size:13px;padding:5px 12px">${a.tier.toUpperCase()} · Buying ${a.overall}</span>
+        <div style="display:flex;gap:16px;margin-top:12px;justify-content:flex-end">
+          <div><div class="k" style="font-size:9px;color:var(--muted-2);font-weight:800;text-transform:uppercase">Confidence</div><div style="font-size:18px;font-weight:800;color:var(--good)">${a.conf}%</div></div>
+          <div><div class="k" style="font-size:9px;color:var(--muted-2);font-weight:800;text-transform:uppercase">Risk</div><div style="font-size:18px;font-weight:800;color:var(--amber)">${a.risk}%</div></div>
+          <div><div class="k" style="font-size:9px;color:var(--muted-2);font-weight:800;text-transform:uppercase">Buy prob.</div><div style="font-size:18px;font-weight:800;color:var(--teal)">${a.prob}%</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="tabs">${tabs.map(t=>`<div class="tab ${t===ACC_TAB?'on':''}" onclick="setAccTab('${a.id}','${t}')">${t[0].toUpperCase()+t.slice(1)}</div>`).join('')}</div>
+    <div id="acc-tab"></div>
+  </div>
+  <div class="grid g-2e">
+    <div class="panel pad"><div class="sh"><h3>Score stack</h3><span class="meta">why: ${a.overall}/100</span></div>
+      ${Object.entries(a.scores).map(([k,v])=>meterRow(k,v)).join('')}</div>
+    <div>
+      <div class="panel pad" style="margin-bottom:14px"><div class="sh"><h3>Recommended play</h3></div>
+        <div class="fact"><div class="k">Recommended offering</div><div class="v">${esc(a.offering)}</div></div>
+        <div class="fact" style="border:none;margin-top:10px"><div class="k">Next best action</div><div class="v" style="color:var(--teal);font-weight:700">${esc(a.nba)}</div></div>
+        <div style="display:flex;gap:8px;margin-top:12px"><button class="btn pri" onclick="go('outreach')">Draft executive brief</button><button class="btn" onclick="setAccTab('${a.id}','people')">See decision makers</button></div>
+      </div>
+      <div class="panel pad"><div class="sh"><h3>Evidence sources</h3><span class="meta">${a.evidence.length} dated</span></div>
+        ${a.evidence.map(e=>`<div class="ev-item"><span class="src">${e.src}</span><span>${esc(e.t)}</span><span style="margin-left:auto;color:var(--muted-2)">${e.d} · trust ${Math.round(e.trust*100)}%</span></div>`).join('')}</div>
+    </div>
+  </div>`;
+  setAccTab(a.id,ACC_TAB);animateBars();
+}
+function setAccTab(id,t){ACC_TAB=t;const a=ACCOUNTS.find(x=>x.id===id);
+  document.querySelectorAll('#page .tab').forEach(el=>el.classList.toggle('on',el.textContent.toLowerCase()===t));
+  const box=document.getElementById('acc-tab');if(!box)return;
+  if(t==='overview'){box.innerHTML=`
+    <div class="aisum" style="margin-bottom:14px">🧠 <b>AI summary</b> — ${esc(a.summary)}</div>
+    <div class="facts">
+      ${fact('Revenue',fmtCr(a.rev))}${fact('Employees',a.emp.toLocaleString('en-IN'))}
+      ${fact('Plants',a.plants+' — '+a.locations.join(', '))}${fact('Ownership',a.own)}
+      ${fact('Estimated consulting budget',fmtCr(a.budget)+' /yr')}${fact('Operational maturity',a.maturity)}
+      ${fact('Transformation readiness',a.readiness)}${fact('Awards',a.awards.join(', ')||'—')}
+    </div>
+    <div class="grid g-2e" style="margin-top:14px">
+      <div><div class="k" style="font-size:10px;color:var(--muted-2);font-weight:800;text-transform:uppercase;margin-bottom:8px">Business priorities</div>${a.priorities.map(p=>`<div class="pill" style="margin:0 6px 6px 0">✓ ${esc(p)}</div>`).join('')}</div>
+      <div><div class="k" style="font-size:10px;color:var(--muted-2);font-weight:800;text-transform:uppercase;margin-bottom:8px">Current challenges</div>${a.challenges.map(p=>`<div class="pill" style="margin:0 6px 6px 0;border-color:rgba(242,117,140,.3);color:var(--rose)">! ${esc(p)}</div>`).join('')}</div>
+    </div>`;}
+  else if(t==='signals'){box.innerHTML=a.sigs.map(s=>sigCard(a.name,s)).join('')||'<div class="meta">No live signals.</div>';}
+  else if(t==='people'){box.innerHTML=(a.people.length?a.people.map(pid=>personCard(PEOPLE[pid])).join(''):'<div class="meta">Decision-maker enrichment pending for this account. Connect Apollo/Clay to populate.</div>')
+    +`<div class="panel pad" style="margin-top:6px;background:var(--panel-2)"><div class="sh"><h3>Org chart & warm paths</h3></div><div class="meta">Rendered from the Relationship agent — highlights alumni / ex-client routes to the buying committee. ${a.id==='kalyani'?'<span style="color:var(--good)">● Warm path found: ex-Bosch alumnus → new COO.</span>':'No warm path yet — cold approach recommended.'}</div></div>`;}
+  else if(t==='financials'){box.innerHTML=`<div class="facts">
+      ${fact('Revenue (₹ Cr)',fmtCr(a.rev))}${fact('Ownership',a.own)}
+      ${fact('Financial score',a.scores.Financial+'/100')}${fact('Risk flags',a.risk>18?'Elevated — watch input costs / execution':'Low')}
+      ${fact('Est. consulting budget',fmtCr(a.budget)+' /yr')}${fact('Probability of buying',a.prob+'%')}</div>
+      <div class="aisum" style="margin-top:14px">Financial health supports a funded engagement; the buying pressure is operational (margin at scale / quality deadline), not liquidity. Lead with payback, not cost.</div>`;}
+  else if(t==='tech'){box.innerHTML=`<div class="k" style="font-size:10px;color:var(--muted-2);font-weight:800;text-transform:uppercase;margin-bottom:10px">Technology & digital-maturity gap</div>
+      ${a.tech.map(tt=>`<div class="pill" style="margin:0 6px 8px 0">${esc(tt)}</div>`).join('')}
+      <div class="aisum" style="margin-top:12px">Digital-manufacturing maturity is a gap, not a strength — manual OEE/quality tracking means the operational upside is large and measurable. Position digital-OpEx as an enabler of the transformation, not a separate IT project.</div>`;}
+  else if(t==='outreach'){box.innerHTML=`<div class="meta" style="margin-bottom:10px">Jump to the full Outreach Centre with this account pre-loaded.</div><button class="btn pri" onclick="go('outreach')">Open Outreach Centre →</button>`;}
+}
+function fact(k,v){return `<div class="fact"><div class="k">${k}</div><div class="v">${esc(String(v))}</div></div>`;}
+
+/* --------- Module 3: Signals --------- */
+RENDER.signals=()=>{
+  const all=[];ACCOUNTS.forEach(a=>a.sigs.forEach(s=>all.push({co:a.name,id:a.id,...s})));
+  all.sort((x,y)=>y.urg-x.urg);
+  P().innerHTML=`
+  <div class="filterbar">
+    <select id="stier" onchange="renderSignals()"><option value="">All intent tiers</option><option value="i-vh">Very High</option><option value="i-h">High</option><option value="i-m">Medium</option><option value="i-l">Low</option></select>
+    <span class="pill"><span class="live-dot"></span> Live feed</span>
+    <span class="meta" style="margin-left:auto">42-signal consulting library · <b style="color:var(--teal)">unique to SMMART</b></span>
+  </div>
+  <div class="grid g-2">
+    <div><div class="sh"><h3>Live transformation-trigger feed</h3><span class="meta" id="sigcount"></span></div><div id="sigfeed"></div></div>
+    <div class="panel pad"><div class="sh"><h3>Signal library — how intent is ranked</h3></div>
+      ${sigLib('Very High',['New greenfield plant (PLI)','New COO / Head of Manufacturing','New OpEx/CI/Transformation role','PLI capacity','First global OEM / export win','PE investment','Double-trigger (any two)'],'i-vh')}
+      ${sigLib('High',['Board capex >₹100 Cr','Six Sigma / Lean / CI hiring','ISO / IATF certification drive','Industry 4.0 / MES / SAP','Merger / acquisition','New plant head','Capacity doubling','Cost-reduction commitment'],'i-h')}
+      ${sigLib('Medium',['ESG / sustainability programme','New CHRO / L&D head','Government MOU / incentive','Supply-chain modernisation','New product line','Joint venture','New CEO / MD'],'i-m')}
+      ${sigLib('Low',['General revenue growth','Generic hiring','Website refresh','Small non-mfg funding'],'i-l')}
+      ${sigLib('Very Low',['CSR / donation news','Social posts','Directory presence'],'i-vl')}
+      <div class="meta" style="margin-top:12px">Each signal maps to a capability gap, a SMMART offering and a reason. Full model → <b>docs/03-buying-signal-model.md</b>.</div>
+    </div>
+  </div>`;
+  renderSignals();
+};
+function renderSignals(){
+  const tf=document.getElementById('stier')?.value||'';
+  const all=[];ACCOUNTS.forEach(a=>a.sigs.forEach(s=>all.push({co:a.name,id:a.id,...s})));
+  const rows=all.filter(s=>!tf||s.tier===tf).sort((x,y)=>y.urg-x.urg);
+  document.getElementById('sigfeed').innerHTML=rows.map(s=>sigCard(s.co,s,s.id)).join('');
+  document.getElementById('sigcount').textContent=rows.length+' active signals';
+}
+function sigLib(tier,items,cls){return `<div style="margin-bottom:12px"><span class="intent ${cls}">${tier}</span>
+  <div style="margin-top:7px;display:flex;flex-wrap:wrap;gap:6px">${items.map(i=>`<span class="tagx">${esc(i)}</span>`).join('')}</div></div>`;}
+function sigCard(co,s,id){const tn={'i-vh':'Very High','i-h':'High','i-m':'Medium','i-l':'Low','i-vl':'Very Low'}[s.tier];
+  return `<div class="sig">
+    <div class="top"><span class="dotv" style="background:var(--${s.tier.replace('i-','')})"></span><span class="co">${esc(co)}</span>
+      <span class="intent ${s.tier}">${tn} intent</span><span class="tagx">${esc(s.type)}</span><span class="conf">${s.d} ago · conf ${s.conf}%</span></div>
+    <div class="ttl">${esc(s.impact)}</div>
+    <div class="ev">Source: <b style="color:var(--muted)">${esc(s.src)}</b></div>
+    <div class="why"><b>Why it's intent:</b> ${esc(s.reason)}</div>
+    <div class="foot">
+      <span class="tagx">💬 Pitch: ${esc(s.pitch)}</span>
+      <span class="tagx">🎯 <b>${esc(s.off)}</b></span>
+      <span class="tagx">Urgency <b>${s.urg}</b></span>
+      ${id?`<span class="go" style="margin-left:auto" onclick="openAccount('${id}')">Open account →</span>`:''}
+    </div></div>`;}
+
+/* --------- Module 4: Scoring --------- */
+RENDER.scoring=()=>{
+  const board={p1:ACCOUNTS.filter(a=>a.tier==='p1'),p2:ACCOUNTS.filter(a=>a.tier==='p2'),p3:ACCOUNTS.filter(a=>a.tier==='p3')};
+  P().innerHTML=`
+  <div class="panel pad" style="margin-bottom:16px">
+    <div class="sh"><h3>The score stack — 10 dimensions → one buying score</h3><span class="meta">model v2.3 · weights tunable</span></div>
+    <div class="grid g-3">
+      <div><div class="meta" style="margin-bottom:8px">Every account is scored on 10 evidence-weighted dimensions. Intent, Transformation and Expansion carry the most weight for SMMART.</div>
+        ${meterRow('Intent (weight .22)',94)}${meterRow('Transformation (.16)',91)}${meterRow('Expansion (.14)',95)}${meterRow('Leadership (.14)',88)}${meterRow('Financial (.10)',80)}</div>
+      <div style="display:grid;place-items:center">${radar(ACCOUNTS[0].scores)}</div>
+      <div><div class="k" style="font-size:10px;color:var(--muted-2);font-weight:800;text-transform:uppercase;margin-bottom:8px">Formula</div>
+        <div class="inspector" style="font-size:11px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px">
+        <div class="ln"><span class="t">DimScore</span> = Σ conf × tierWeight × <span class="w">decay(age)</span> × trust</div>
+        <div class="ln"><span class="t">Overall</span> = Σ DimScore × dimWeight</div>
+        <div class="ln"><span class="w">decay</span> = 0.5 ^ (age / halfLife)</div>
+        <div class="ln">tierW: VH 1.0 · H .7 · M .4 · L .2</div>
+        <div class="ln">trust: primary 1.0 · media .7 · social .5</div></div>
+        <div class="meta" style="margin-top:10px">Classify: <span class="ptier p1">P1</span> ≥80 + fresh VH · <span class="ptier p2">P2</span> 65–79 · <span class="ptier p3">P3</span> 50–64 · <span class="ptier pd">Dormant</span> &lt;50</div></div>
+    </div>
+  </div>
+  <div class="grid g-3">
+    ${pcol('P1 · Pursue now','p1',board.p1,'Transformation confirmed — partner contact ≤7 days')}
+    ${pcol('P2 · Nurture','p2',board.p2,'Window opening — brief ≤21 days')}
+    ${pcol('P3 · Watch / Future','p3',board.p3,'Fit, no live trigger — re-scan quarterly')}
+  </div>`;
+};
+function pcol(title,cls,list,sla){return `<div class="panel pad"><div class="sh"><h3>${title}</h3><span class="ptier ${cls}">${list.length}</span></div>
+  <div class="meta" style="margin-bottom:12px">${sla}</div>
+  ${list.map(a=>`<div class="arow" onclick="openAccount('${a.id}')" style="margin-bottom:8px">
+    <div class="alogo" style="width:32px;height:32px;font-size:13px">${a.logo}</div>
+    <div style="min-width:0"><div class="nm" style="font-size:12.5px">${esc(a.name)}</div><div class="mt">${a.city} · ${a.ind}</div></div>
+    <div class="rt"><div class="score" style="font-size:17px">${a.overall}</div><div class="mt">${a.prob}% buy</div></div></div>`).join('')}</div>`;}
+
+/* --------- Module 5: People --------- */
+RENDER.people=()=>{
+  const ids=['rohan','vikas','anil','deepa','sunita','harish'];
+  P().innerHTML=`<div class="sh"><h3>Decision-maker intelligence</h3><span class="meta">buying committee across high-intent accounts · newly-changed roles flagged</span></div>
+  <div class="grid g-2e">${ids.map(id=>personCard(PEOPLE[id])).join('')}</div>`;
+};
+function personCard(p){if(!p)return'';return `<div class="person">
+  <div class="pav" style="background:${p.color}">${p.av}</div>
+  <div style="min-width:0;flex:1">
+    <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap"><span class="nm">${esc(p.name)}</span>${p.newRole?'<span class="newrole">● New in role</span>':''}</div>
+    <div class="tt">${esc(p.role)} · ${esc(p.org)}</div>
+    <div class="kv">${Object.entries(p.kv).map(([k,v])=>`<div class="k">${k}</div><div class="v">${esc(v)}</div>`).join('')}
+      <div class="k">Likely KPIs</div><div class="v">${p.kpis.join(' · ')}</div>
+      <div class="k">Pain points</div><div class="v">${p.pain.join(' · ')}</div>
+      <div class="k">Comms style</div><div class="v">${esc(p.comm)}</div>
+      <div class="k">Buying behaviour</div><div class="v">${esc(p.behav)}</div>
+      <div class="k">Relationship</div><div class="v" style="color:${p.strength.startsWith('Warm')?'var(--good)':'var(--muted)'}">${esc(p.strength)}</div>
+    </div>
+    <div class="starter">💬 ${esc(p.starter)}</div>
+    <div class="angles"><span class="angle" onclick="go('outreach')">✉ Email: ${esc(p.email)}</span><span class="angle" onclick="go('outreach')">📞 Call: ${esc(p.call)}</span><span class="angle" onclick="go('outreach')">🤝 Meeting: ${esc(p.meeting)}</span></div>
+  </div></div>`;}
+
+/* --------- Module 6: Outreach --------- */
+RENDER.outreach=()=>{
+  P().innerHTML=`
+  <div class="sh"><h3>AI outreach centre — Vega Auto · Rohan Deshpande (COO)</h3><span class="meta">every draft cites the evidence behind it</span></div>
+  <div class="grid g-2">
+    <div class="panel pad">
+      <div class="tabs" style="margin-top:0">${['Cold email','LinkedIn','Call script','Exec brief','Objections'].map((t,i)=>`<div class="tab ${i===0?'on':''}" onclick="setOut(${i})">${t}</div>`).join('')}</div>
+      <div id="outbody"></div>
+    </div>
+    <div>
+      <div class="panel pad" style="margin-bottom:14px"><div class="sh"><h3>ROI calculator</h3><span class="meta">modelled engagement value</span></div>
+        <div class="roi">
+          <div class="field"><label>Plant revenue (₹ Cr): <b id="rr">450</b></label><input type="range" min="100" max="1500" value="450" id="ri1" oninput="roiCalc()"></div>
+          <div class="field"><label>Current OEE (%): <b id="ro">62</b></label><input type="range" min="40" max="85" value="62" id="ri2" oninput="roiCalc()"></div>
+        </div>
+        <div style="margin-top:14px;text-align:center"><div class="out">Modelled annual value of a SMMART OpEx + TPM engagement</div><div class="big" id="roiout">₹—</div><div class="meta" id="roinote"></div></div>
+      </div>
+      <div class="panel pad"><div class="sh"><h3>Attach</h3></div>
+        <div class="pill" style="margin:0 6px 8px 0">📎 Case study: Auto-component OEE +14%</div>
+        <div class="pill" style="margin:0 6px 8px 0">📎 Case study: Greenfield lean ramp</div>
+        <div class="pill" style="margin:0 6px 8px 0">📎 Value prop: First-90-days COO sprint</div>
+        <div class="pill" style="margin:0 6px 8px 0">📎 Meeting agenda: Bhosari workshop</div>
+        <div class="pill" style="margin:0 6px 8px 0">📎 Proposal outline: TPM + Lean + Leadership</div>
+      </div>
+    </div>
+  </div>`;
+  setOut(0);roiCalc();
+};
+const OUT=[
+{h:'Cold email — subject: “Bhosari, before the ramp”',b:`Hi Rohan,\n\nCongratulations on the COO role at Vega. With the ₹450 Cr PLI plant at Bhosari sanctioned this month, you have something most operators never get: a blank sheet.\n\nMost greenfield plants quietly lose 6–9 months of margin to ramp waste that was designable-out on day zero — layout, flow, TPM standards, first-pass yield. We help new COOs bank an early, visible OEE win inside the first 90 days.\n\nWorth 20 minutes to compare notes on how peer OEMs de-risked their ramp?\n\n— [Partner], SMMART\n\n[cites: PIB PLI release · Exchange capex filing · LinkedIn appointment]`},
+{h:'LinkedIn note (≤300 chars)',b:`Congrats on the Vega COO role, Rohan. The Bhosari PLI plant is a rare day-zero chance to design OEE in rather than fix it later. We help new COOs land an early operational win — open to a quick exchange of notes?`},
+{h:'Call script — opener + discovery',b:`OPENER: “Rohan, I know you’re two weeks in — I’ll be quick. We work with auto-component COOs on greenfield ramps like Bhosari, and there’s a pattern in where the first 6 months of margin leaks. Can I ask two questions?”\n\nDISCOVERY:\n1. “How is the Bhosari line being designed for flow and OEE today — in-house, or with a partner?”\n2. “What does the OEM export audit timeline look like against the ramp?”\n\nBRIDGE: “That’s exactly the gap we close — design the operating system before the line runs, not after.”`},
+{h:'Executive brief (for the partner)',b:`ACCOUNT: Vega Auto Components · Pune · Auto Components · ₹1,900 Cr · P1 (88)\nWHY NOW: Double-trigger — ₹450 Cr PLI greenfield plant + COO ex-OEM (14 days).\nGAP: Blank-slate plant + 90-day leadership mandate + OEM zero-defect deadline.\nOFFER: Lean plant design + TPM + Leadership onboarding.\nBUYING COMMITTEE: Rohan Deshpande (COO, champion) → Anil Kulkarni (MD, economic) → Sunita Rao (Quality, technical).\nNEXT BEST ACTION: COO briefing within 7 days.\nEVIDENCE: PIB, Exchange filing, LinkedIn — all <21 days, trust ≥85%.`},
+{h:'Objection handling',b:`“We have an internal team.” → “Ideal — we install the operating system your team runs after we leave. The risk on a greenfield ramp isn’t capability, it’s time; we compress the learning curve.”\n\n“No budget yet.” → “The PLI budget is fresh and unspent — the cheapest time to design lean is before the line is built. Retrofitting flow post-ramp costs multiples more.”\n\n“Too early, we’re still building.” → “That’s precisely the window. Layout, flow and TPM standards are decided now, not at ramp.”`}];
+function setOut(i){document.querySelectorAll('#page .tab').forEach((t,idx)=>t.classList.toggle('on',idx===i));
+  document.getElementById('outbody').innerHTML=`<div style="font-size:12px;font-weight:800;color:var(--teal);margin:4px 0 10px">${esc(OUT[i].h)}</div>
+  <div style="white-space:pre-wrap;font-size:12.5px;line-height:1.7;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:15px">${esc(OUT[i].b)}</div>
+  <div style="display:flex;gap:8px;margin-top:12px"><button class="btn pri">✨ Regenerate with AI</button><button class="btn">Send to approval queue</button><button class="btn">Copy</button></div>
+  <div class="meta" style="margin-top:8px">⚠ AI-generated — routed through the Human-Approval gate before it reaches the prospect.</div>`;}
+function roiCalc(){const rev=+document.getElementById('ri1').value,oee=+document.getElementById('ri2').value;
+  document.getElementById('rr').textContent=rev;document.getElementById('ro').textContent=oee;
+  const uplift=Math.min(15,Math.round((80-oee)*0.4));const val=Math.round(rev*uplift/100*0.35);
+  document.getElementById('roiout').textContent='₹'+val+' Cr';
+  document.getElementById('roinote').textContent=`Assumes ~${uplift}% OEE uplift → margin recovery at scale. Illustrative.`;}
+
+/* --------- Module 7: Command Centre --------- */
+let SEL_AGENT=0;
+RENDER.command=()=>{
+  P().innerHTML=`
+  <div class="grid g-2">
+    <div>
+      <div class="sh"><h3>Agent fleet</h3><span class="meta">LangGraph · supervisor + 16 workers · checkpointed</span></div>
+      <div class="fleet" id="fleet"></div>
+    </div>
+    <div>
+      <div class="panel pad" style="margin-bottom:14px"><div class="sh"><h3>Agent inspector</h3><span class="meta" id="insp-name"></span></div><div id="inspector"></div></div>
+      <div class="panel pad"><div class="sh"><h3>⏸ Human-approval queue</h3><span class="meta">nothing goes out without sign-off</span></div>
+        ${approve('Cold email → Rohan Deshpande (Vega COO)','Outreach agent · conf 0.85')}
+        ${approve('LinkedIn note → Vikas Rao (Kalyani COO)','Outreach agent · warm-path · conf 0.88')}
+        ${approve('Promote Vega Auto to P1','Scoring agent · double-trigger · conf 0.94')}
+      </div>
+    </div>
+  </div>`;
+  renderFleet();selectAgent(0);
+};
+function renderFleet(){document.getElementById('fleet').innerHTML=AGENTS.map((a,i)=>`
+  <div class="agent ${i===SEL_AGENT?'sel':''}" onclick="selectAgent(${i})">
+    <div class="an"><span class="orb ${a.st}"></span>${esc(a.n)}</div>
+    <div class="role">${esc(a.role)}</div>
+    <div class="mx"><span>conf <b>${Math.round(a.conf*100)}%</b></span><span>queue <b>${a.q}</b></span><span>retry <b>${a.rt}</b></span><span>fail <b>${a.f}</b></span></div>
+  </div>`).join('');}
+function selectAgent(i){SEL_AGENT=i;const a=AGENTS[i];renderFleet();
+  document.getElementById('insp-name').textContent=a.n+' agent';
+  document.getElementById('inspector').innerHTML=`<div class="inspector">
+    <div class="ln"><span class="t">status</span> ${a.st==='st-run'?'● running':a.st==='st-gate'?'⏸ human gate':'○ idle'} · confidence ${a.conf.toFixed(2)}</div>
+    <div class="ln"><span class="t">memory</span> <span class="w">${esc(a.mem)}</span></div>
+    <div class="ln"><span class="t">reasoning</span> ${esc(reasoning(a.n))}</div>
+    <div class="ln"><span class="t">task queue</span> ${a.q} pending · retries ${a.rt} · failures ${a.f}</div>
+    <div class="ln"><span class="t">tools (MCP)</span> <span class="w">${esc(tools(a.n))}</span></div>
+    <div class="ln"><span class="t">last handoff</span> <span class="w">→ ${esc(handoff(a.n))}</span></div>
+  </div>`;}
+function reasoning(n){const m={'Supervisor':'stale accounts=14 → fan out collectors; budget ok; loop until conf≥.85','News':'312 items → dedupe → 6 candidates; 1 retry on paywalled source','Hiring':'Kalyani posts CI+BB roles → High-intent hiring signal','Leadership':'Detected COO change at Vega & Kalyani → Very-High signal','Evidence Validator':'Vega PLI: PIB primary source confirmed → trust 1.0; dismissed 1 rumour','Lead Scoring':'Vega Intent 94 + Expansion 95 → Overall 88 → P1','Human Approval':'3 external actions parked; awaiting human decision','Website':'3 new plant pages found; 1 crawl failed (403) → retry queued','Relationship':'Bosch alumni edge → warm path to Kalyani COO'};return m[n]||'processing task queue against evidence store';}
+function tools(n){const m={'Research':'Sprouts · Clay · registries','News':'news API · Google · RSS','Hiring':'TheirStack · Apollo jobs · careers','Funding':'exchange filings · funding DB','Leadership':'LinkedIn · news','Procurement':'gov tenders · PIB · PLI','Website':'crawler · BuiltWith','Email / Outreach':'Claude (Sonnet) · templates','Lead Scoring':'scoring engine · pgvector'};return m[n]||'Atlas internal MCP';}
+function handoff(n){const m={'Supervisor':'collector fan-out','News':'News Summariser','News Summariser':'Evidence Validator','Evidence Validator':'Lead Scoring','Lead Scoring':'Relationship + Outreach','Relationship':'Outreach','Email / Outreach':'Human Approval','Human Approval':'persist + dashboards'};return m[n]||'Supervisor (join)';}
+function approve(t,m){return `<div class="approve"><div class="orb st-gate"></div><div class="tx"><b>${esc(t)}</b><div class="meta">${esc(m)}</div></div>
+  <div style="margin-left:auto;display:flex;gap:6px"><button class="btn pri sm">Approve</button><button class="btn sm">Edit</button><button class="btn sm">Reject</button></div></div>`;}
+
+/* --------- ticker --------- */
+function buildTicker(){
+  const items=[];ACCOUNTS.forEach(a=>a.sigs.forEach(s=>items.push({co:a.name,tier:s.tier,type:s.type,d:s.d,conf:s.conf})));
+  items.sort((x,y)=>parseInt(x.d)-parseInt(y.d));
+  const html=items.map(s=>`<span class="it"><span class="dotv" style="background:var(--${s.tier.replace('i-','')})"></span><b>${esc(s.co)}</b> · ${esc(s.type)} · ${s.d} ago · ${s.conf}%</span>`).join('');
+  document.getElementById('ticker').innerHTML=html+html;
+}
+
+/* --------- keyboard ⌘K (simple jump) --------- */
+document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();
+  const q=prompt('Jump to account (e.g. Vega, Kalyani, Meridian) or module (exec/signals/scoring/people/outreach/command):');if(!q)return;
+  const a=ACCOUNTS.find(x=>x.name.toLowerCase().includes(q.toLowerCase()));if(a){openAccount(a.id);return;}
+  if(RENDER[q.toLowerCase()])go(q.toLowerCase());}});
+
+buildTicker();go('exec');
+</script>
+</body>
+</html>
